@@ -1,0 +1,183 @@
+{
+  "format": "blocks",
+  "no": "012",
+  "category": "网络安全",
+  "title": "RCE远程执行漏洞",
+  "date": "2026-08-26",
+  "readingMinutes": 8,
+  "words": 2754,
+  "excerpt": "Remote Command/Code Execute 多出现于运维工具中，或者网络交互配置设备中，服务器没有对用户输入做过滤，导致传入的恶意指令被服务器直接执行造成的漏洞 具有严重的危害性，能直接执行命令相当于基本控制…",
+  "body": [
+    {
+      "type": "p",
+      "text": "**Remote Command/Code Execute**\n多出现于运维工具中，或者网络交互配置设备中，服务器没有对用户输入做过滤，导致传入的恶意指令被服务器直接执行造成的漏洞\n具有严重的危害性，能直接执行命令相当于基本控制设备"
+    },
+    {
+      "type": "h2",
+      "text": "远程命令执行"
+    },
+    {
+      "type": "p",
+      "text": "基于服务器使用了某些命令执行函数来利用"
+    },
+    {
+      "type": "p",
+      "text": "以php举例，使用了命令执行函数，如："
+    },
+    {
+      "type": "code",
+      "lang": "code",
+      "text": "| exec() | shell_exec() | assert() | system() | passthru() | proc_open() | popen() | pcntl_exec() |"
+    },
+    {
+      "type": "quote",
+      "text": "*(PHP 4, PHP 5, PHP 7, PHP 8)system — 执行外部程序，并且显示输出*\n>`function system(string $command, int &$result_code = null): string|false`"
+    },
+    {
+      "type": "p",
+      "text": "或者Linux系统下加单反引号 **``** 符号包含命令"
+    },
+    {
+      "type": "quote",
+      "text": "示例： *$ ls `echo '/var'`*，会先执行``块中的代码，然后再将结果拼接到外层的ls命令中执行"
+    },
+    {
+      "type": "p",
+      "text": "示例函数详解：\n`system()` 函数用于在系统权限允许的情况下执行系统命令（Windows 和 Linux 系统均可执行）。eg：`system('cat /etc/passwd');`\n`exec()` 函数可以执行系统命令，但不会直接输出结果，而是将结果保存到数组中。eg：`exec('cat /etc/passwd', $result); print_r($result);`\n`shell_exec()` 函数执行系统命令，但返回一个字符串类型的变量来存储系统命令的执行结果。eg：`echo shell_exec('cat /etc/passwd');`\n`passthru()` 函数执行系统命令并将执行结果输出到页面中，支持二进制数据。eg：`passthru('cat /etc/passwd');`\n`popen()` 函数执行系统命令，但返回一个资源类型的变量，需要配合 fread() 函数读取结果。eg：`$result = popen('cat /etc/passwd', 'r'); echo fread($result, 100);`\n`反引号` 用于执行系统命令，返回一个字符串类型的变量来存储命令的执行结果。eg：`echo \\cat /etc/passwd;`"
+    },
+    {
+      "type": "h3",
+      "text": "利用窍门"
+    },
+    {
+      "type": "p",
+      "text": "command指令拼接方式："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "单and符`&`：连接两句指令，一前一后执行",
+          "level": 0
+        },
+        {
+          "text": "双and符`&&`：连接两句指令，一前一后执行",
+          "level": 0
+        },
+        {
+          "text": "单管道符`|`：连接两句指令，执行后一句指令\n-如果后一句指令错误则报错不执行，前一句错误则无影响",
+          "level": 0
+        },
+        {
+          "text": "双管道符`||`：连接两句指令，执行前一句指令\n-如果前一句指令错误则执行后一句指令，后一句错误无影响",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "&&（逻辑与运算符）: 只有当第一个命令 cmd_1 执行成功（返回值为 0）时，才会执行第二个命令 cmd_2。例:  mkdir test && cd test\n\n||（逻辑或运算符）: 只有当第一个命令 cmd_1 执行失败（返回值不为 0）时，才会执行第二个命令 cmd_2。例:  cd nonexistent_directory || echo \"Directory not found\"\n\n&（后台运行符）: 将命令 cmd_1 放到后台执行，Shell 立即执行 cmd_2，两个命令并行执行。例:  sleep 10 & echo \"This will run immediately.\"\n\n;（命令分隔符）: 无论前一个命令 cmd_1 是否成功，都会执行下一个命令 cmd_2。例:  echo \"Hello\" ; echo \"World\""
+    },
+    {
+      "type": "h4",
+      "text": "**关于黑名单字符串过滤的绕过：**"
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "在Shell中，单/双引号 \"/' 可以用来定义一个空字符串或保护包含空格或特殊字符的字符串。\n例如：echo \"$\"a 会输出 $a，而 echo $a 会输出变量a的值，当只有\"\"则表示空字符串，Shell会忽略它。\n\n*（星号）: 匹配零个或多个字符。例子: *.txt。\n?（问号）: 匹配单个字符。例子: file?.txt。\n[]（方括号）: 匹配方括号内的任意一个字符。例子: file[1-3].txt。\n[^]（取反方括号）: 匹配不在方括号内的字符。例子: file[^a-c].txt。\n{}（大括号）: 匹配大括号内的任意一个字符串。例子: file{1,2,3}.txt。\n\n通过组合上述技巧，我们可以用于绕过CTF中一些简单的过滤：\n\nsystem(\"c''at /e't'c/pass?d\");\nsystem(\"/???/?at /e't'c/pass?d\");\nsystem(\"/???/?at /e't'c/*ss*\");"
+    },
+    {
+      "type": "h4",
+      "text": "**关于空格过滤的绕过**"
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "在遇到空格被过滤的情况下，通常使用 %09 也就是TAB的URL编码来绕过，在终端环境下 空格 被视为一个命令分隔符，本质上由 $IFS 变量控制，而 $IFS 的默认值是空格、制表符和换行符，所以我们还可以通过直接键入 $IFS 来绕过空格过滤。"
+    },
+    {
+      "type": "h4",
+      "text": "**关于重定向符**"
+    },
+    {
+      "type": "p",
+      "text": "Shell 重定向符用于改变命令的标准输入（stdin）、标准输出（stdout）、标准错误（stderr）的来源或去向。"
+    },
+    {
+      "type": "p",
+      "text": "`<`基本输入重定向"
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "#把文件内容作为命令的输入，代替键盘输入\n# 基本用法：从文件读取输入\ncat < /etc/passwd        # 等价于 cat /etc/passwd\n\n# 把文件内容传给需要标准输入的命令\nsort < numbers.txt       # 对文件内容排序\n\n# 配合 read 命令\nwhile read line; do\n    echo \"处理: $line\"\ndone < data.txt\n"
+    },
+    {
+      "type": "p",
+      "text": "`>`基本输出重定向"
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "#把命令输出写入文件，覆盖原有内容\n# 基本用法：覆盖写入\necho hello > file.txt    # 文件内容变成 \"hello\"\n\n# 追加重定向（不覆盖，追加到末尾）\necho world >> file.txt   # 文件内容变成 \"hello\\nworld\"\n\n# 重定向标准错误\ncat /notexist 2> error.log   # 把错误信息写入文件\n\n# 同时重定向 stdout 和 stderr\ncommand > all.log 2>&1"
+    },
+    {
+      "type": "p",
+      "text": "`<<`Here Document"
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "#从当前脚本读取多行输入，直到遇到结束标记\ncat << EOF\n这是一段\n多行文本\nEOF"
+    },
+    {
+      "type": "p",
+      "text": "`<<<`Here String"
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "#把字符串直接作为标准输入\n# 基本用法\ncat <<< \"hello world\"    # 输出 hello world\n\n# 配合命令替换\nbc <<< \"1 + 2\"           # 输出 3\n\n# 绕过空格过滤\ncat<<<\"hello\"            # 不需要空格！"
+    },
+    {
+      "type": "h2",
+      "text": "远程代码执行"
+    },
+    {
+      "type": "p",
+      "text": "基于服务器使用了某些代码执行函数来利用"
+    },
+    {
+      "type": "p",
+      "text": "以php为例，使用了代码执行函数，如："
+    },
+    {
+      "type": "code",
+      "lang": "code",
+      "text": "| eval() | assert() | call_user_func() |"
+    },
+    {
+      "type": "h3",
+      "text": "利用示例"
+    },
+    {
+      "type": "p",
+      "text": "以皮卡丘靶场为例\nexec_eval练习中，提交`phpinfo();`函数，会直接输出服务器php版本信息"
+    },
+    {
+      "type": "h2",
+      "text": "WAF绕过"
+    },
+    {
+      "type": "h3",
+      "text": "无字母数字命令执行"
+    },
+    {
+      "type": "p",
+      "text": "使用符号构建\n`$(())` -> `0`"
+    }
+  ]
+}

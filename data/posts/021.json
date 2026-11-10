@@ -1,0 +1,578 @@
+{
+  "format": "blocks",
+  "no": "021",
+  "category": "架构设计",
+  "title": "设计模式",
+  "date": "2026-11-08",
+  "readingMinutes": 18,
+  "words": 6444,
+  "excerpt": "程序设计过程中，通常会用到下面的几种设计模式，下面进行逐一概述",
+  "body": [
+    {
+      "type": "p",
+      "text": "程序设计过程中，通常会用到下面的几种设计模式，下面进行逐一概述"
+    },
+    {
+      "type": "h2",
+      "text": "工厂模式"
+    },
+    {
+      "type": "quote",
+      "text": "场景：一个支付系统，在完成基础的计件收费功能外，如果需要新增促销活动影响，对金额结算过程可以如何修改？"
+    },
+    {
+      "type": "p",
+      "text": "基础实现 : `单阶 * 数量 = 总价`"
+    },
+    {
+      "type": "p",
+      "text": "将总价结算过程的“促销”系统独立出来，单独处理"
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "p",
+      "text": "实现一个基础父类(abstract) `CashSuper`"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public abstract class CashSuper{\n    abstract double acceptCash(double money);\n}\n"
+    },
+    {
+      "type": "p",
+      "text": "然后根据促销方式的不同分别写对应子类计算逻辑，子类都继承父类`CashSuper`\n如正常结算、总价打折、满减折扣等\n在子类里重写`acceptCash`方法，实现各自的促销逻辑即可"
+    },
+    {
+      "type": "p",
+      "text": "正常结算:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class CashNormal extends CashSuper{\n    @override\n    double acceptCash(double money) {\n        return money;\n        // 正常结算直接返回原价\n    }\n}"
+    },
+    {
+      "type": "p",
+      "text": "总价打折:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class CashRebate extends CashSuper{\n    private double rate = 1.0;\n    \n    public CashRebate(double rate){\n        //构造方法，传折扣率参数\n        this.rate = rate;\n    }\n\n    @override\n    double acceptCash(double money) {\n        return money * rate;\n        // 折扣结算\n    }\n}"
+    },
+    {
+      "type": "p",
+      "text": "满减折扣:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class CashRebate extends CashSuper{\n    private double moneyCondition = 300;\n    private double mouneyReturn = 100;\n    \n    public CashRebate(double moneyCondition,double mouneyReturn){\n        //构造方法，传满减参数\n        this.moneyCondition = moneyCondition;\n        this.mouneyReturn = mouneyReturn;\n    }\n\n    @override\n    double acceptCash(double money) {\n        if (money >= moneyCondition){\n            return money - mouneyReturn\n        }else{\n            return money\n        }\n    }\n}"
+    },
+    {
+      "type": "p",
+      "text": "最后使用一个工厂类`CashFactory`和业务逻辑对接"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class CashFactory {\n    public static CashSuper createCashAdapter(String type){\n        return switch (type){\n            case \"原价\" -> new CashNormal();\n            case \"满减\" -> new CashReturn(moneyCondition:300,moneyReturn:100);\n            case \"打折\" -> newCashRebate(0.8);\n            default -> throw new IllegalstateException(\"Unexpected value:\" + type);\n        }\n    }\n}"
+    },
+    {
+      "type": "p",
+      "text": "程序入口中调用:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "CashSuper csuper = CashFactory.createCashAdapter(discountText);\n//计算费用并应用折扣\ndouble cost = csuper.acceptCash(price * quantity):"
+    },
+    {
+      "type": "p",
+      "text": "这样，就是一个典型的工厂模式实践"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "策略模式"
+    },
+    {
+      "type": "p",
+      "text": "策略模式是一种对业务算法类的封装方式，目的是为了系统解耦，增加功能封装度"
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "p",
+      "text": "用之前的例子促销系统来改造"
+    },
+    {
+      "type": "p",
+      "text": "新增一个`CashContext`类"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class CashContext{\n    private CashSuper cs;\n\n    public CashContext(String type){\n        this.cs = switch (tpye){\n            case \"原价\" -> new CashNormal();\n            case \"满减\" -> new CashReturn(300,100);\n            case \"折扣\" -> new CashRebate(0.8);\n            default -> throw new illegalStateException(\"Unexpected value:\" + type);\n        }\n    }\n\n    public double getResult(double money){\n        return cs.acceptCash(money);\n    }\n}"
+    },
+    {
+      "type": "p",
+      "text": "业务入口处改造为:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "double cost = new CashContext(discountText).getResult(price * quantity);\n//这样外部业务只需要一句代码就可以实现整个打折的过程，且调用简单"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "备忘录模式"
+    },
+    {
+      "type": "h3",
+      "text": "定义"
+    },
+    {
+      "type": "p",
+      "text": "备忘录模式的主要目的是: 在不破坏一个对象封装性的情况下，提供捕捉该对象内部状态的方法，并且在该对象之外保存该对象的状态"
+    },
+    {
+      "type": "p",
+      "text": "这样就可以在需要的时候，将该对象恢复到原先保存的状态"
+    },
+    {
+      "type": "quote",
+      "text": "通过记录一个对象在不同时期内部的完整状态，就可以对程序进行逆运行的状态还原"
+    },
+    {
+      "type": "h3",
+      "text": "优缺点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "优点",
+          "level": 0
+        },
+        {
+          "text": "提供了一种恢复状态的机制",
+          "level": 0
+        },
+        {
+          "text": "实现了内部状态的封装",
+          "level": 0
+        },
+        {
+          "text": "简化了外部职责",
+          "level": 0
+        },
+        {
+          "text": "缺点",
+          "level": 0
+        },
+        {
+          "text": "对资源的消耗较大",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "p",
+      "text": "示例代码:"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "// 备忘录\nclass Memento{\n    private String state;\n    public Memento(String state){\n        this.state = state;\n    }\n    public void setState(String state){\n        this.state = state;\n    }\n    public String getState(){return state;}\n}\n\n// 发起人\nclass Originator{\n    String state;\n    public void setState(String state){this.state = state;}\n    public String getState(){return state;}\n    public Memento createMemnto(){\n        return new Memento(state);\n    }\n    public void restoreMemento(Memento m){\n        this.setState(m.getState());\n    }\n\n}\n \n// 管理者\nclass Caretaker{\n    private Memento memento;\n    public void setMemento(Memento m){memento = m;}\n    public Memento getMemento(){return memento;}\n}\n"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "代理模式"
+    },
+    {
+      "type": "h3",
+      "text": "定义"
+    },
+    {
+      "type": "p",
+      "text": "由于某些原因(功能、安全等)，需要使用一个代理去控制目标对象的访问，访问对象不能直接引用目标对象，所以需要在中间添加代理层"
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "细分类型"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "静态代理: 从实际编写的代码中创建的代理类",
+          "level": 0
+        },
+        {
+          "text": "动态代理: 使用反射技术，在程序运行过程中自动创建代理类",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "优缺点"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "优点",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "保护目标对象的封装性",
+          "level": 0
+        },
+        {
+          "text": "降低系统功能间的耦合性",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "缺点",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "增加冗余",
+          "level": 0
+        },
+        {
+          "text": "拖慢性能",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "// 抽象主题\ninterface Subject{\n    void Request();\n}\n\n// 真实主题类\nclass RealSubject implements Subject{\n    public void Request() {\n        System.out.println(\"访问真实主题方法\")\n    }\n}\n\n// 代理类\nclass Proxy implements Subject{\n    private RealSubject realSubject;\n    public void Request(){\n        if (realSubject == null){\n            realSubject = new RealSubject();\n        }\n        preRequest();//在原本的请求前后增加处理过程\n        realSubject.Request();\n        postRequest();\n    }\n    public void preRequest(){System.out.println(\"访问真实主题前的预处理\");}\n    public void postRequest(){System.out.println(\"访问真实主题后的后处理\");}\n}\n"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "单例模式"
+    },
+    {
+      "type": "h3",
+      "text": "特点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "只有一个实例对象",
+          "level": 0
+        },
+        {
+          "text": "该对象必须由单例类自行创建",
+          "level": 0
+        },
+        {
+          "text": "对外提供一个全局访问点",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "// 懒汉式单例\npublic class LazySingleton{\n    private static volatile LazySingleton instance = null;\n    // 保证instance在所有线程中同步\n    private LazySingleton(){\n        //private 避免类在外部被实例化\n    }\n    public static synchronized LazySingleton getInstance(){\n        //getInstance 前加同步\n        if(instance == null){\n            instance = new LazySingleton();\n        }\n        return instance;\n    }\n}\n\n\n// 饿汉式单例\npublic class HungrySingleton(){\n    private static final HungrySingleton instance = new HungrySingleton();\n    private HungrySingleton(){\n\n    }\n    public static HungrySingleton getInstance(){\n        return instance;\n    }\n}"
+    },
+    {
+      "type": "h3",
+      "text": "优点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "能保证在内存中只有一个实例，可以减少内存开销",
+          "level": 0
+        },
+        {
+          "text": "可以跨线程使用",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "缺点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "接口少，功能修改难度大",
+          "level": 0
+        },
+        {
+          "text": "在并发中难以测试",
+          "level": 0
+        },
+        {
+          "text": "代码统合在同一个类里，如果功能设计不合理，可能会违背单一职责原则",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "应用场景"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "需要频繁创建实例的场景，使用单例可以降低内存消耗",
+          "level": 0
+        },
+        {
+          "text": "业务功能只需要一个实例存在的情况",
+          "level": 0
+        },
+        {
+          "text": "该类实例资源变动不频繁",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "迭代器模式"
+    },
+    {
+      "type": "p",
+      "text": "在程序设计中，通常会遇到需要访问聚合对象中各个元素的情况，如链表、数组等"
+    },
+    {
+      "type": "p",
+      "text": "通常情况下，可能会将列表的创建和遍历都放在同一个类中"
+    },
+    {
+      "type": "p",
+      "text": "但如果遇到需要修改功能的情况下，比如更换遍历方法，就需要把整个类拆开来"
+    },
+    {
+      "type": "p",
+      "text": "聚合类中不提供遍历方法，我们也不能把遍历方法交给外部来实现，因为这样会暴露内部的结构，不利于数据安全性"
+    },
+    {
+      "type": "p",
+      "text": "所以迭代器模式应运而生"
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "public class IteratorPattern{\n    // 入口类\n    public static void main(String[] args){\n        Aggregate ag = new ConcreteAggregate();\n        ag.add(\"kazuma\");\n        ag.add(\"aqua\");\n        ag.add(\"megumi\");\n        System.out.print(\"聚合的内容有：\");\n        Iterator it = ag.getIterator();\n        while(it.hasNext()){\n            Object ob = it.next();\n            System.out.print(ob.toString() + \"\\t\");\n        }\n        Object ob = it.first();\n        System.out.println(\"\\nFirst:\"+ob.toString());\n    }\n}\n\n// 抽象聚合\ninterface Aggregate{\n    public void add(Object obj);\n    public void remove(Object obj);\n    public Iterator getIterator();\n}\n\n// 具体聚合\nclass ConcreteAggregate implements Aggregate{\n    private List<Object> list = new ArrayList();\n    // 实现各接口方法\n    public void add(Object obj){ list.add(obj); }\n\n    public void remove(Object obj){ list.remove(obj); }\n\n    public Iterator  getIterator(){\n        return (new ConcreteIterator(list));\n    }\n}\n\n// 抽象迭代器\ninterface Iterator{\n    Object first();\n\n    Object next();\n\n    boolean hasNext();\n}\n\n// 具体迭代器\nclass ConcreteIterator implements Iterator{\n    private List<Object> list = null;\n\n    private int index = -1;\n\n    public ConcreteIterator(List<Object> list){\n        this.list = list;\n    }\n    \n    public boolean hasNext(){\n        if (index<list.size()-1){\n            return true;\n        }else{\n            return false;\n        }\n    }\n\n    public Object first(){\n        index = 0;\n        Object obj = list.get(index);\n        return obj;\n    }\n\n    public Object next(){\n        Object obj = null;\n        if(this.hasNext()){\n            obj = list.get(++index);\n        }\n        return obj;\n    }\n}\n"
+    },
+    {
+      "type": "h3",
+      "text": "优点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "提供了一个对象来访问聚合对象内部",
+          "level": 0
+        },
+        {
+          "text": "遍历的任务交由迭代器，简化了聚合类",
+          "level": 0
+        },
+        {
+          "text": "支持不同的方式自己实现迭代器",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "缺点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "增加了系统复杂性",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "日常中较少会用到，目前的聚合类基本都提供了强大且完善的迭代器，除非需要为自己定义的数据结构实现迭代器"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "访问者模式"
+    },
+    {
+      "type": "p",
+      "text": "被处理的数据结构相对稳定，但是访问的方式多种多样时，通常会用到访问者模式"
+    },
+    {
+      "type": "p",
+      "text": "访问者模式可以把处理方法和数据结构分离，同时可以根据需要随时扩展处理方法"
+    },
+    {
+      "type": "h3",
+      "text": "UML类图"
+    },
+    {
+      "type": "h3",
+      "text": "实现"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "//抽象访问者\ninterface Visitor{\n    void visit(ConcreteElementA element);\n    void visit(ConcreteElementB element);\n}\n\n//具体访问者A类\nclass ConcretevisitorA implements Visitor{\n    public void visit(ConcreteElementA element){ System.out.println(\"具体访问者A访问-->\" + element.operationA()); }\n    public void visit(concreteElementB element){ System.out.println(\"具体访问者B访问-->\" + element.operationB()); }\n}\n\n//抽象元素类\ninterface Element {\n    void accept(Visitor visitor);\n}\n\n//具体元素A类\nclass ConcreteElementA implements Element {\n    public void accept(visitor visitor){ visitor.visit(this); }\n\n    public String operationA(){ return\"具体元素A的操作。\"; }\n}\n//具体元素B类\nclass ConcreteElementB implements Element {\n    public void accept(visitor visitor){ visitor.visit(this); }\n    \n    public String operationB(){ return\"具体元素B的操作。\"; }\n}\n\n//对象结构角色\nclass Objectstructure {\n    private List<Element> list = new ArrayList();\n\n    public void accept(Visitor visitor){\n        Iterator<Element>i=list.iterator();\n        while (i.hasNextO){\n            ((Element)i.next()).accept(visitor);\n        }\n    }\n\n    public void add(Element element){ list.add(relement); }\n\n    public void remove(Element element){ list.remove(element); }\n}\n"
+    },
+    {
+      "type": "h3",
+      "text": "优点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "扩展性较好",
+          "level": 0
+        },
+        {
+          "text": "复用性较好",
+          "level": 0
+        },
+        {
+          "text": "灵活，数据结构和操作解耦",
+          "level": 0
+        },
+        {
+          "text": "符合单一职责",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "缺点"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "增加元素较困难",
+          "level": 0
+        },
+        {
+          "text": "破坏了封装",
+          "level": 0
+        },
+        {
+          "text": "违反了依赖导致原则(依赖了具体的类而非抽象类)",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    }
+  ]
+}

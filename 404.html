@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>页面不存在 · 深空观测站</title>
+<style>
+  :root {
+    --bg: #060608;
+    --ink: #f2f2ef;
+    --dim: rgba(242, 242, 239, .55);
+    --faint: rgba(242, 242, 239, .28);
+    --hair: rgba(242, 242, 239, .14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    padding: 40px 24px;
+    text-align: center;
+  }
+  .code {
+    margin-bottom: 30px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: .5em;
+    color: var(--faint);
+  }
+  h1 {
+    margin-bottom: 20px;
+    font-size: clamp(24px, 4vw, 38px);
+    font-weight: 400;
+    letter-spacing: .14em;
+  }
+  p {
+    font-size: 12.5px;
+    letter-spacing: .2em;
+    color: var(--dim);
+  }
+  .back {
+    display: inline-block;
+    margin-top: 30px;
+    padding-bottom: 3px;
+    font-size: 11px;
+    letter-spacing: .24em;
+    color: var(--dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hair);
+    transition: color .3s, border-color .3s;
+  }
+  .back:hover { color: var(--ink); border-color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="code">404 — SIGNAL LOST</p>
+    <h1>这片星域没有记录</h1>
+    <p>正在返回观测站……</p>
+    <a class="back" id="home-link" href="/">手动返回</a>
+  </div>
+
+  <script>
+    (function () {
+      var seg = location.pathname.split('/')[1];
+      var candidates = [];
+      if (seg) candidates.push('/' + seg + '/');
+      candidates.push('/');
+
+      var link = document.getElementById('home-link');
+
+      function attempt(i) {
+        if (i >= candidates.length) {
+          location.replace('/');
+          return;
+        }
+        var base = candidates[i];
+        fetch(base + 'index.html', { method: 'HEAD', cache: 'no-store' })
+          .then(function (res) {
+            if (res.ok) {
+              link.href = base;
+              location.replace(base);
+            } else {
+              attempt(i + 1);
+            }
+          })
+          .catch(function () {
+            attempt(i + 1);
+          });
+      }
+
+      attempt(0);
+    })();
+  </script>
+</body>
+</html>

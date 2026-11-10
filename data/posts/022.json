@@ -1,0 +1,735 @@
+{
+  "format": "blocks",
+  "no": "022",
+  "category": "开发工具",
+  "title": "Git 仓库重命名后的本地配置修复指南",
+  "date": "2026-11-08",
+  "readingMinutes": 12,
+  "words": 4025,
+  "excerpt": "文章浏览阅读120次。GitHub仓库重命名后，本地Git配置中的remote URL仍指向旧地址，导致push/pull失败。本文详解三种修复方案：推荐使用git remote set-url直接更新URL；备选方案为…",
+  "body": [
+    {
+      "type": "h2",
+      "text": "一、问题现象"
+    },
+    {
+      "type": "p",
+      "text": "当 GitHub 仓库被重命名后，你本地的远程仓库地址（origin）仍然指向旧的 URL，导致推送或拉取时出现类似以下错误："
+    },
+    {
+      "type": "p",
+      "text": "错误示例：\nremote: Repository not found.\nfatal: repository ‘https://github.com/用户名/旧仓库名.git/’ not found"
+    },
+    {
+      "type": "p",
+      "text": "或者：\nERROR: Repository not found.\nfatal: Could not read from remote repository."
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "二、问题原因分析"
+    },
+    {
+      "type": "p",
+      "text": "Git 本地仓库通过 remote 配置记录远程仓库的 URL。当你执行 git push 或 git pull 时，Git 会使用这个配置的地址去连接 GitHub。仓库重命名后，旧地址失效，需要更新本地配置。"
+    },
+    {
+      "type": "p",
+      "text": "本地配置存储位置："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "全局配置：~/.gitconfig 或 ~/.config/git/config",
+          "level": 0
+        },
+        {
+          "text": "项目配置：项目目录/.git/config",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "三、解决方案（按推荐顺序）"
+    },
+    {
+      "type": "h3",
+      "text": "方案一：直接修改远程 URL（最常用，推荐）"
+    },
+    {
+      "type": "p",
+      "text": "这是最直接、最安全的方法，只影响当前项目。"
+    },
+    {
+      "type": "p",
+      "text": "步骤："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "进入本地项目目录",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tcd /path/to/your/project"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看当前远程仓库配置",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote -v\n\t输出示例：\n\torigin https://github.com/用户名/旧仓库名.git (fetch)\n\torigin https://github.com/用户名/旧仓库名.git (push)"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "修改远程仓库 URL",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote set-url origin https://github.com/用户名/新仓库名.git\n\t或者使用 SSH 格式：\n\tgit remote set-url origin git@github.com:用户名/新仓库名.git"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "验证修改是否成功",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote -v\n\t输出示例：\n\torigin https://github.com/用户名/新仓库名.git (fetch)\n\torigin https://github.com/用户名/新仓库名.git (push)"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "测试连接",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit fetch origin\n\t或\n\tgit push origin --dry-run"
+    },
+    {
+      "type": "h3",
+      "text": "方案二：先删除再添加远程仓库（备选）"
+    },
+    {
+      "type": "p",
+      "text": "如果 set-url 命令执行异常，可以采用先删后加的方式。"
+    },
+    {
+      "type": "p",
+      "text": "步骤："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "删除现有的 origin",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote remove origin"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "添加新的 origin",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote add origin https://github.com/用户名/新仓库名.git"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "验证配置",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote -v"
+    },
+    {
+      "type": "h3",
+      "text": "方案三：手动编辑配置文件（不推荐，但可用于批量修改）"
+    },
+    {
+      "type": "p",
+      "text": "直接编辑.git/config 文件。"
+    },
+    {
+      "type": "p",
+      "text": "步骤："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "打开配置文件",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tvim.git/config\n\t或\n\tnano.git/config"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "找到类似以下内容并修改",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\t\\[remote “origin”\\]\n\turl = https://github.com/用户名/旧仓库名.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "将 url 改为新地址",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\t\\[remote “origin”\\]\n\turl = https://github.com/用户名/新仓库名.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "保存文件并退出",
+          "level": 0
+        },
+        {
+          "text": "验证配置",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote -v"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "四、可能遇到的特殊情况及处理"
+    },
+    {
+      "type": "h3",
+      "text": "情况 1：项目有多个远程仓库（如 origin 和 upstream）"
+    },
+    {
+      "type": "p",
+      "text": "如果你同时配置了 origin（你的 fork）和 upstream（原项目），只需修改对应的远程仓库名。"
+    },
+    {
+      "type": "p",
+      "text": "查看所有远程仓库：\ngit remote -v"
+    },
+    {
+      "type": "p",
+      "text": "修改特定的远程仓库（例如修改 upstream）：\ngit remote set-url upstream https://github.com/原作者/新仓库名.git"
+    },
+    {
+      "type": "h3",
+      "text": "情况 2：使用 SSH 协议的克隆地址"
+    },
+    {
+      "type": "p",
+      "text": "如果你的远程地址是 SSH 格式（git@github.com:…），修改时保持一致："
+    },
+    {
+      "type": "p",
+      "text": "将 HTTPS 改为 SSH：\ngit remote set-url origin git@github.com:用户名/新仓库名.git"
+    },
+    {
+      "type": "p",
+      "text": "将 SSH 改为 HTTPS：\ngit remote set-url origin https://github.com/用户名/新仓库名.git"
+    },
+    {
+      "type": "h3",
+      "text": "情况 3：仓库所有者变更（用户名改变）"
+    },
+    {
+      "type": "p",
+      "text": "如果不仅仓库名变了，用户名也变了（例如从 A 转移到 B）："
+    },
+    {
+      "type": "p",
+      "text": "修改示例：\n原地址：https://github.com/旧用户名/旧仓库名.git\n新地址：https://github.com/新用户名/新仓库名.git"
+    },
+    {
+      "type": "p",
+      "text": "执行命令：\ngit remote set-url origin https://github.com/新用户名/新仓库名.git"
+    },
+    {
+      "type": "h3",
+      "text": "情况 4：多个本地克隆需要同步更新"
+    },
+    {
+      "type": "p",
+      "text": "如果你在多台机器上都有该仓库的本地副本，每台机器都需要执行上述修改操作。"
+    },
+    {
+      "type": "p",
+      "text": "批量更新脚本示例（ Linux /Mac）：\n#!/bin/bash\nPROJECT\\_DIR=“/path/to/project”\ncd $PROJECT_DIR\ngit remote set-url origin https://github.com/用户名/新仓库名.git\necho “Updated repository:$PROJECT\\_DIR”"
+    },
+    {
+      "type": "h3",
+      "text": "情况 5：原有分支和标签是否受影响"
+    },
+    {
+      "type": "p",
+      "text": "修改远程 URL 不会影响本地分支和标签，因为："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "本地分支（如 main, develop）存储在本地.git 目录中",
+          "level": 0
+        },
+        {
+          "text": "远程跟踪分支（如 origin/main）会在下次 fetch 时自动更新",
+          "level": 0
+        },
+        {
+          "text": "标签（tags）同样不受影响，push 时会自动关联到新地址",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "但需要注意："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "本地已经存在的远程跟踪分支可能显示旧仓库信息，但会在 fetch 后自动更新",
+          "level": 0
+        },
+        {
+          "text": "如果 push 时使用 git push -u origin main，会重新设置上游分支",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "五、修改后的验证步骤"
+    },
+    {
+      "type": "p",
+      "text": "完成上述修改后，建议执行以下验证："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "验证远程仓库 URL",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit remote get-url origin\n\t应该输出新仓库地址"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拉取最新代码测试",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit fetch origin\n\t应显示成功拉取所有分支"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看分支状态",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit branch -vv\n\t确保远程跟踪分支正常"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "推送一次测试（建议先 dry-run）",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit push origin --dry-run\n\t或直接推送一个临时修改\n\tgit push origin main"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看远程仓库的提交历史",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tgit log origin/main --oneline -5\n\t确认能正常获取提交记录"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "六、预防措施"
+    },
+    {
+      "type": "p",
+      "text": "为了避免因仓库重命名导致本地配置失效，可以采取以下措施："
+    },
+    {
+      "type": "h3",
+      "text": "6.1 使用 GitHub 提供的重定向功能"
+    },
+    {
+      "type": "p",
+      "text": "GitHub 在仓库重命名后会提供自动重定向："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "旧的 URL 会重定向到新 URL，持续一段时间（通常是永久）",
+          "level": 0
+        },
+        {
+          "text": "但 git 命令行不会跟随 HTTP 重定向，所以仍然需要修改",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "6.2 在团队内建立变更通知机制"
+    },
+    {
+      "type": "p",
+      "text": "当仓库名变更时，及时通知所有协作者："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "发送邮件通知",
+          "level": 0
+        },
+        {
+          "text": "在团队聊天工具（Slack、钉钉、飞书）中公告",
+          "level": 0
+        },
+        {
+          "text": "在仓库的 README 中注明新的克隆地址",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "6.3 使用组织级别的仓库名约定"
+    },
+    {
+      "type": "p",
+      "text": "制定仓库命名规范，避免频繁改名："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "使用有意义且稳定的名称",
+          "level": 0
+        },
+        {
+          "text": "避免使用版本号作为仓库名（如 project-v1，改用 project）",
+          "level": 0
+        },
+        {
+          "text": "在 README 中清晰说明项目用途",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "6.4 配置 git 的 insteadOf 别名（高级）"
+    },
+    {
+      "type": "p",
+      "text": "对于频繁迁移的情况，可以配置 git 别名来统一管理：\ngit config --global url.“https://github.com/用户名/”.insteadOf “git@github-old:”"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "七、常见问题 FAQ"
+    },
+    {
+      "type": "h3",
+      "text": "Q1：修改后仍然提示 “Repository not found”"
+    },
+    {
+      "type": "p",
+      "text": "可能原因及解决方案："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "新仓库名输入错误：仔细核对新仓库名的大小写",
+          "level": 0
+        },
+        {
+          "text": "权限不足：确认你有该仓库的访问权限",
+          "level": 0
+        },
+        {
+          "text": "网络问题：检查是否能正常访问 GitHub",
+          "level": 0
+        },
+        {
+          "text": "仓库确实已被删除：联系管理员确认",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "Q2：修改后 push 时提示 “failed to push some refs”"
+    },
+    {
+      "type": "p",
+      "text": "可能原因：本地分支落后于远程分支\n解决方案：\ngit pull origin main --rebase\ngit push origin main"
+    },
+    {
+      "type": "h3",
+      "text": "Q3：如何批量修改多个项目的远程地址？"
+    },
+    {
+      "type": "p",
+      "text": "方案：编写脚本遍历所有项目目录\n#!/bin/bash\nfor dir in /path/to/projects/\\*/; do\nif \\[ -d “dir”\ngit remote set-url origin https://github.com/用户名/新仓库名.git\necho “Updated: $dir”\nfi\ndone"
+    },
+    {
+      "type": "h3",
+      "text": "Q4：修改远程 URL 后，之前的 commit 历史会丢失吗？"
+    },
+    {
+      "type": "p",
+      "text": "不会。commit 历史存储在本地.git 目录中，修改远程 URL 只是改变了推送目标地址，不影响本地历史。"
+    },
+    {
+      "type": "h3",
+      "text": "Q5：如果有多个远程仓库（如 origin 和 backup），每个都需要修改吗？"
+    },
+    {
+      "type": "p",
+      "text": "是的，需要分别修改每个远程仓库的 URL：\ngit remote set-url origin 新地址\ngit remote set-url backup 新地址"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "八、命令速查表"
+    },
+    {
+      "type": "table",
+      "head": [
+        "操作",
+        "命令"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "查看所有本地分支",
+          "git branch"
+        ],
+        [
+          "查看所有分支（含远程）",
+          "git branch -a"
+        ],
+        [
+          "切换到已有分支（传统）",
+          "git checkout <分支名>"
+        ],
+        [
+          "切换到已有分支（现代）",
+          "git switch <分支名>"
+        ],
+        [
+          "创建并切换新分支（传统）",
+          "git checkout -b <新分支名>"
+        ],
+        [
+          "创建并切换新分支（现代）",
+          "git switch -c <新分支名>"
+        ],
+        [
+          "暂存当前修改",
+          "git stash"
+        ],
+        [
+          "恢复暂存的修改",
+          "git stash pop"
+        ],
+        [
+          "查看当前分支与远程关系",
+          "git branch -vv"
+        ],
+        [
+          "查看分支图形历史",
+          "git log --oneline --graph --all"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "九、总结"
+    },
+    {
+      "type": "p",
+      "text": "核心要点："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "仓库重命名后，本地需要更新 remote 的 URL",
+          "level": 0
+        },
+        {
+          "text": "使用 git remote set-url 是最推荐的方式",
+          "level": 0
+        },
+        {
+          "text": "修改后务必验证（git remote -v 和 git fetch）",
+          "level": 0
+        },
+        {
+          "text": "多台机器上的本地克隆都需要分别修改",
+          "level": 0
+        },
+        {
+          "text": "仓库重命名不影响本地提交历史和分支",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "一句话总结：\n仓库改名不要慌，remote set-url 来解决，fetch 验证保平安。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "p",
+      "text": "文档版本：1.0\n适用场景：GitHub 仓库重命名后本地配置修复\n最后更新：2026年9月"
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/170292075?spm=1001.2014.3001.5501"
+}

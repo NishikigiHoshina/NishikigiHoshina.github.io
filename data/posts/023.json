@@ -1,0 +1,535 @@
+{
+  "format": "blocks",
+  "no": "023",
+  "category": "开发工具",
+  "title": "Git 分支切换完全指南",
+  "date": "2026-11-08",
+  "readingMinutes": 9,
+  "words": 3157,
+  "excerpt": "分支切换（Branch Switching）是指将当前工作目录从一条分支线转移到另一条分支线的操作。切换后，你电脑上的所有源代码文件会自动更新为目标分支的最新内容。",
+  "body": [
+    {
+      "type": "h3",
+      "text": "一、核心概念"
+    },
+    {
+      "type": "h4",
+      "text": "1.1 什么是分支切换"
+    },
+    {
+      "type": "p",
+      "text": "分支切换（Branch Switching）是指将当前工作目录从一条分支线转移到另一条分支线的操作。切换后，你电脑上的所有源代码文件会自动更新为目标分支的最新内容。"
+    },
+    {
+      "type": "h4",
+      "text": "1.2 切换的前提条件"
+    },
+    {
+      "type": "p",
+      "text": "重要：切换分支前，当前分支的所有修改必须被\"处理\"掉，否则 Git 会阻止切换。"
+    },
+    {
+      "type": "p",
+      "text": "+------------------+-------------------+---------------------------+\n| 状态              | 能否切换          | 处理方式                  |\n+------------------+-------------------+---------------------------+\n| 所有修改已提交    | 可以              | 直接切换                  |\n| 有未提交但不想提交| 可以              | 使用 git stash 暂存       |\n| 有未提交且想提交  | 可以              | 先 add + commit           |\n| 有未提交且与目标冲突| 不可以           | 必须先 commit 或 stash    |\n+------------------+-------------------+---------------------------+"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "二、切换分支的两种命令方式"
+    },
+    {
+      "type": "h4",
+      "text": "2.1 传统方式：git checkout（通用，兼容性好）"
+    },
+    {
+      "type": "p",
+      "text": "切换到指定分支：\ngit checkout <分支名>"
+    },
+    {
+      "type": "p",
+      "text": "示例：切换到 main 分支\ngit checkout main"
+    },
+    {
+      "type": "p",
+      "text": "示例：切换到 develop 分支\ngit checkout develop"
+    },
+    {
+      "type": "h4",
+      "text": "2.2 现代方式：git switch（Git 2.23+ 推荐）"
+    },
+    {
+      "type": "p",
+      "text": "切换到指定分支（更纯粹，只负责切换）：\ngit switch <分支名>"
+    },
+    {
+      "type": "p",
+      "text": "示例：切换到 main 分支\ngit switch main"
+    },
+    {
+      "type": "h4",
+      "text": "2.3 两种命令的区别"
+    },
+    {
+      "type": "p",
+      "text": "+--------------+----------------------------------+---------------------------+\n| 命令         | 特点                             | 推荐场景                  |\n+--------------+----------------------------------+---------------------------+\n| git checkout | 功能全面，既能切换也能恢复文件    | 习惯传统方式的开发者      |\n| git switch   | 职责单一，只负责切换，不易误操作  | 新项目推荐使用            |\n+--------------+----------------------------------+---------------------------+"
+    },
+    {
+      "type": "p",
+      "text": "建议：如果你用的是较新版本的 Git（2.23+），优先使用 git switch，因为它不会与其他操作混淆。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "三、实际操作场景与命令"
+    },
+    {
+      "type": "h4",
+      "text": "场景 1：本地已有分支，直接切换"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看所有本地分支（当前分支前有 * 标记）：\ngit branch",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "切换到目标分支：\ngit switch feature-login",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "确认切换成功：\ngit branch",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "场景 2：切换到远程存在的分支（本地没有）"
+    },
+    {
+      "type": "p",
+      "text": "方法一：先拉取远程分支信息，再切换\ngit fetch origin\ngit switch -c feature-payment origin/feature-payment"
+    },
+    {
+      "type": "p",
+      "text": "方法二：直接切换（Git 会自动跟踪远程分支）\ngit switch feature-payment"
+    },
+    {
+      "type": "h2",
+      "text": "如果本地没有但远程有，Git 会提示并自动创建跟踪分支"
+    },
+    {
+      "type": "h4",
+      "text": "场景 3：创建并切换到新分支（二合一）"
+    },
+    {
+      "type": "p",
+      "text": "传统方式：\ngit checkout -b new-feature"
+    },
+    {
+      "type": "p",
+      "text": "现代方式（推荐）：\ngit switch -c new-feature"
+    },
+    {
+      "type": "h2",
+      "text": "-c 代表 create（创建）"
+    },
+    {
+      "type": "h4",
+      "text": "场景 4：切换时暂存未提交的修改"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "暂存当前所有未提交的修改：\ngit stash save \"临时保存：正在开发登录功能\"",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "切换分支：\ngit switch main",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "处理完其他工作后，切回原分支：\ngit switch feature-login",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "恢复暂存的修改：\ngit stash pop",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "场景 5：切换时强制丢弃本地修改（危险操作）"
+    },
+    {
+      "type": "p",
+      "text": "警告：此操作会永久丢失所有未提交的修改！\ngit checkout -- .          # 丢弃所有修改\ngit clean -fd              # 删除所有未跟踪的文件\ngit switch main            # 然后切换分支"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "四、切换后的验证与检查"
+    },
+    {
+      "type": "h4",
+      "text": "4.1 确认当前分支"
+    },
+    {
+      "type": "p",
+      "text": "方法一：查看分支列表\ngit branch\n输出示例：\n  develop"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "main        <- * 号表示当前所在分支\nfeature-login",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "方法二：查看详细状态\ngit status\n输出示例：\nOn branch main\nYour branch is up to date with 'origin/main'."
+    },
+    {
+      "type": "h4",
+      "text": "4.2 查看当前分支的最新提交"
+    },
+    {
+      "type": "p",
+      "text": "查看最近的提交记录：\ngit log --oneline -5"
+    },
+    {
+      "type": "p",
+      "text": "查看当前分支与远程的关系：\ngit branch -vv"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "五、常见问题与解决方案"
+    },
+    {
+      "type": "h4",
+      "text": "问题 1：切换时提示 \"Your local changes would be overwritten\""
+    },
+    {
+      "type": "p",
+      "text": "错误信息：\nerror: Your local changes to the following files would be overwritten by checkout:\n    src/app.js\nPlease commit your changes or stash them before you switch branches."
+    },
+    {
+      "type": "p",
+      "text": "解决方案："
+    },
+    {
+      "type": "p",
+      "text": "方案 A：提交修改\ngit add src/app.js\ngit commit -m \"保存当前进度\"\ngit switch main"
+    },
+    {
+      "type": "p",
+      "text": "方案 B：暂存修改（推荐临时切换）\ngit stash\ngit switch main"
+    },
+    {
+      "type": "h2",
+      "text": "切回来后执行：git stash pop"
+    },
+    {
+      "type": "h4",
+      "text": "问题 2：切换后文件内容没有变化"
+    },
+    {
+      "type": "p",
+      "text": "可能原因：目标分支与当前分支指向同一个提交（内容完全相同）。"
+    },
+    {
+      "type": "p",
+      "text": "验证：\ngit log --oneline --graph --all"
+    },
+    {
+      "type": "h2",
+      "text": "查看两个分支是否指向同一个 commit"
+    },
+    {
+      "type": "h4",
+      "text": "问题 3：切换时提示 \"pathspec did not match any files\""
+    },
+    {
+      "type": "p",
+      "text": "原因：分支名输入错误或分支不存在。"
+    },
+    {
+      "type": "p",
+      "text": "解决方案："
+    },
+    {
+      "type": "h2",
+      "text": "查看所有分支（包括远程）"
+    },
+    {
+      "type": "p",
+      "text": "git branch -a"
+    },
+    {
+      "type": "h2",
+      "text": "确认正确的分支名后再切换"
+    },
+    {
+      "type": "p",
+      "text": "git switch 正确的分支名"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "六、最佳实践建议"
+    },
+    {
+      "type": "h4",
+      "text": "6.1 切换前的检查清单"
+    },
+    {
+      "type": "p",
+      "text": "[ ] 运行 git status 查看工作区是否干净\n[ ] 如果有未提交修改，决定是 commit 还是 stash\n[ ] 确认目标分支名称正确\n[ ] 如果目标分支在远程，先 git fetch 获取最新信息"
+    },
+    {
+      "type": "h4",
+      "text": "6.2 切换时的推荐流程"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看当前状态\ngit status",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "如果有修改，暂存或提交\ngit stash  # 或 git add + git commit",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "获取远程最新分支信息\ngit fetch origin",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "切换分支\ngit switch <目标分支名>",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拉取该分支的最新代码（可选）\ngit pull origin <目标分支名>",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "6.3 切换后的验证"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "确认所在分支\ngit branch",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看文件变化\ngit status",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "确认代码运行正常\n# 运行你的项目测试或启动命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "七、命令速查表"
+    },
+    {
+      "type": "table",
+      "head": [
+        "操作",
+        "命令"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "查看所有本地分支",
+          "git branch"
+        ],
+        [
+          "查看所有分支（含远程）",
+          "git branch -a"
+        ],
+        [
+          "切换到已有分支（传统）",
+          "git checkout <分支名>"
+        ],
+        [
+          "切换到已有分支（现代）",
+          "git switch <分支名>"
+        ],
+        [
+          "创建并切换新分支（传统）",
+          "git checkout -b <新分支名>"
+        ],
+        [
+          "创建并切换新分支（现代）",
+          "git switch -c <新分支名>"
+        ],
+        [
+          "暂存当前修改",
+          "git stash"
+        ],
+        [
+          "恢复暂存的修改",
+          "git stash pop"
+        ],
+        [
+          "查看当前分支与远程关系",
+          "git branch -vv"
+        ],
+        [
+          "查看分支图形历史",
+          "git log --oneline --graph --all"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "八、总结"
+    },
+    {
+      "type": "h4",
+      "text": "核心要点"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "切换前必须处理未提交的修改（commit 或 stash）",
+          "level": 0
+        },
+        {
+          "text": "优先使用 git switch（更安全，职责单一）",
+          "level": 0
+        },
+        {
+          "text": "切换后验证状态（确认分支正确，文件已更新）",
+          "level": 0
+        },
+        {
+          "text": "养成先 fetch 再切换的习惯（确保分支信息最新）",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "记忆口诀"
+    },
+    {
+      "type": "p",
+      "text": "切换先看状态，修改要么存要么藏；\n新用 switch 旧用 checkout，二合一加 -c 参数帮；\n切完查分支，验证少不了。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "p",
+      "text": "文档版本：1.0\n适用 Git 版本：2.23+\n最后更新：2026年9月"
+    }
+  ]
+}

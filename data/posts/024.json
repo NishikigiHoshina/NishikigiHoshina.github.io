@@ -1,0 +1,166 @@
+{
+  "format": "blocks",
+  "no": "024",
+  "category": "架构设计",
+  "title": "Kafka和RocketMQ架构对比",
+  "date": "2026-11-08",
+  "readingMinutes": 4,
+  "words": 1325,
+  "excerpt": "本文深入对比Kafka与RocketMQ在吞吐性能上的差异，核心聚焦于二者采用的不同零拷贝技术：Kafka使用sendfile（DMA驱动、CPU零参与、两次数据拷贝），RocketMQ采用mmap（三次数据拷贝、用户空…",
+  "body": [
+    {
+      "type": "p",
+      "text": "RocketMQ参考了Kafka的设计思路，简化了架构，丰富了能力，但是kafka仍未被取代，二者之间有什么差异呢？"
+    },
+    {
+      "type": "h2",
+      "text": "差异对比"
+    },
+    {
+      "type": "h3",
+      "text": "性能-吞吐量"
+    },
+    {
+      "type": "p",
+      "text": "kafka的吞吐能力比RocketMQ强许多\n二者都使用零拷贝技术"
+    },
+    {
+      "type": "p",
+      "text": "简单说下 **零拷贝** 技术"
+    },
+    {
+      "type": "p",
+      "text": "这个技术的范围主要发生在磁盘读取，系统调用的过程中"
+    },
+    {
+      "type": "p",
+      "text": "消息队列的消息为了防止丢失，一般会从内存持久化到磁盘上，当消息需要被消费的时候，这个过程是如何工作的？"
+    },
+    {
+      "type": "p",
+      "text": "操作系统分为用户空间和内核空间，程序位于用户空间，而磁盘访问是硬件操作，需要访问内核空间"
+    },
+    {
+      "type": "p",
+      "text": "如果程序需要把磁盘消息发送到网络，需要经历下面的过程："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "程序发起系统调用read()，让内核从磁盘拷贝数据",
+          "level": 0
+        },
+        {
+          "text": "内核将磁盘数据读取到内核缓冲区，再从内核缓冲区拷贝到用户缓冲区",
+          "level": 0
+        },
+        {
+          "text": "程序再发起系统调用write()，把用户缓冲区的消息拷贝到内核中的socket缓冲区",
+          "level": 0
+        },
+        {
+          "text": "网卡从socket缓冲区拷贝消息，最后才发送出去",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "这个过程经历了两次系统调用，四次用户空间和内核空间的切换和四次数据拷贝"
+    },
+    {
+      "type": "p",
+      "text": "这样效率太低了，于是便有了零拷贝技术"
+    },
+    {
+      "type": "p",
+      "text": "常见的零拷贝技术方案有两种，分别是 `mmap` 和 `sendfile`"
+    },
+    {
+      "type": "h4",
+      "text": "mmap"
+    },
+    {
+      "type": "p",
+      "text": "**mmap** 是操作系统提供的一个系统调用方法，可以将内核空间的缓冲区映射到用户空间"
+    },
+    {
+      "type": "p",
+      "text": "有了mmap，上面的过程就发生了一些变化："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "程序发起系统调用mmap()，内核从磁盘拷贝到数据，然后将内核缓冲区映射到用户空间，但不拷贝数据，让用户空间以为自己拿到了数据",
+          "level": 0
+        },
+        {
+          "text": "程序再发起系统调用write()，向socket缓冲区发送数据，这时候内核会把原来内核缓冲区的数据直接拷贝到socket缓冲区，然后送到网卡发送出去",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "这个过程中发生了两次系统调用，四次用户空间和内核空间的切换，但是只经历了三次数据拷贝"
+    },
+    {
+      "type": "p",
+      "text": "三次数据拷贝看起来和零拷贝的”零“不沾边，但实际上这里的“零”指的是用户空间从内核空间拷贝的次数为“零”"
+    },
+    {
+      "type": "h4",
+      "text": "sendfile"
+    },
+    {
+      "type": "p",
+      "text": "**sendfile** 也是操作系统提供的一个系统调用方法，可以直接从磁盘拷贝数据到内核空间，并且网卡直接从该缓冲区读取数据"
+    },
+    {
+      "type": "p",
+      "text": "这个过程中经历了一次系统调用，两次用户空间和内核空间切换，两次数据拷贝"
+    },
+    {
+      "type": "p",
+      "text": "sendfile的拷贝次数比mmap更低，但是仍然有两次拷贝，那么“零”拷贝的“零”在哪里呢？"
+    },
+    {
+      "type": "p",
+      "text": "其实sendfile的“零”是指cpu零参与，这个过程中完成控制的是DMA 控制器 ，cpu全程不参与，可以继续进行程序内部的运算"
+    },
+    {
+      "type": "h3",
+      "text": "kafka的性能为什么比RocketMQ好"
+    },
+    {
+      "type": "p",
+      "text": "因为kafka使用的是sendfile，而rocketMQ使用的是mmap"
+    },
+    {
+      "type": "p",
+      "text": "从两个系统函数的代码来比较:"
+    },
+    {
+      "type": "code",
+      "lang": "c",
+      "text": "int sendfile(int out_fd,in_fd, off_t* offset, int count);\nnum=sendfile(xxx);\n\nvoid *mmap(void *addr, int length, prot, flags,fd, off_t offset);\nbuf=mmap(xxx);\nc运行"
+    },
+    {
+      "type": "p",
+      "text": "sendfile返回的是消息的字节数，而不会返回消息的具体内容，mmap则会将消息内容返回，这在需要对传输数据做中间处理的场景下，mmap才能胜任"
+    },
+    {
+      "type": "h3",
+      "text": "使用场景"
+    },
+    {
+      "type": "p",
+      "text": "RocketMQ架构复杂，部署麻烦，资源消耗也大；而相比之下kafka简单性能好，可以靠插件补充功能"
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/170291974?spm=1001.2014.3001.5501"
+}

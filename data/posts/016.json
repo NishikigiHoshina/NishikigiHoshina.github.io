@@ -1,0 +1,367 @@
+{
+  "format": "blocks",
+  "no": "016",
+  "category": "运维部署",
+  "title": "记录一次MySQL 8.0.30 Win环境密码重置问题",
+  "date": "2026-09-07",
+  "readingMinutes": 8,
+  "words": 2864,
+  "excerpt": "本文详细记录了在Windows环境下重置MySQL 8.0.30 root密码的完整流程，重点解决--skip-grant-tables方式因Bug导致崩溃的问题，并推荐使用--init-file方式：需指定正确data…",
+  "body": [
+    {
+      "type": "h2",
+      "text": "MySQL 8.0.30 Windows 环境 Root 密码重置指南"
+    },
+    {
+      "type": "h3",
+      "text": "一、环境信息"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "操作系统：Windows（Win10/11/Server）",
+          "level": 0
+        },
+        {
+          "text": "MySQL 版本：8.0.30",
+          "level": 0
+        },
+        {
+          "text": "安装路径：C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\",
+          "level": 0
+        },
+        {
+          "text": "数据目录：C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "二、问题描述"
+    },
+    {
+      "type": "p",
+      "text": "在 Windows 环境下遗忘 MySQL root 密码，尝试使用标准的 --skip-grant-tables 方式重置密码时，遇到以下问题："
+    },
+    {
+      "type": "h4",
+      "text": "问题 1：数据目录找不到"
+    },
+    {
+      "type": "p",
+      "text": "报错信息：\n\\[ERROR\\] \\[MY-013276\\] \\[Server\\] Failed to set datadir to ‘C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\data’ (OS errno: 2 - No such file or directory)"
+    },
+    {
+      "type": "p",
+      "text": "原因分析："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "MySQL 默认会去 C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\data 寻找数据目录",
+          "level": 0
+        },
+        {
+          "text": "但实际数据目录在 C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data（ProgramData 是隐藏文件夹）",
+          "level": 0
+        },
+        {
+          "text": "直接用 mysqld 命令启动时，不会自动读取 Windows 服务中的配置",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "解决方案：\n启动时手动指定 --datadir 参数：\nmysqld --skip-grant-tables --skip-networking --datadir=“C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data”"
+    },
+    {
+      "type": "h4",
+      "text": "问题 2：MySQL 8.0.30 的 --skip-grant-tables 崩溃 Bug"
+    },
+    {
+      "type": "p",
+      "text": "报错信息：\nmysqld got exception 0x16\nMost likely, you have hit a bug…"
+    },
+    {
+      "type": "p",
+      "text": "原因分析："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "MySQL 8.0.30 版本存在已知 Bug，使用 --skip-grant-tables 启动时会触发异常 0x16 导致进程崩溃",
+          "level": 0
+        },
+        {
+          "text": "该 Bug 在 8.0.31+ 版本中已被修复",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "解决方案：\n放弃 --skip-grant-tables 方式，改用 --init-file 方式重置密码。"
+    },
+    {
+      "type": "h3",
+      "text": "三、最终成功方案（–init-file 方式）"
+    },
+    {
+      "type": "h4",
+      "text": "步骤 1：停止 MySQL 服务并清理进程"
+    },
+    {
+      "type": "p",
+      "text": "以管理员身份打开命令提示符，执行："
+    },
+    {
+      "type": "p",
+      "text": "net stop MySQL80\ntaskkill /f /im mysqld.exe"
+    },
+    {
+      "type": "p",
+      "text": "确认进程已清理：\ntasklist | findstr mysqld\n（无输出表示已清理干净）"
+    },
+    {
+      "type": "h4",
+      "text": "步骤 2：创建密码重置 SQL 文件"
+    },
+    {
+      "type": "p",
+      "text": "在 C:\\\\ 根目录新建 reset.sql 文件，内容如下："
+    },
+    {
+      "type": "p",
+      "text": "ALTER USER ‘root’@‘localhost’ IDENTIFIED BY ‘你的新密码’;\nFLUSH PRIVILEGES;"
+    },
+    {
+      "type": "p",
+      "text": "密码复杂度要求："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "至少 8 位",
+          "level": 0
+        },
+        {
+          "text": "包含大写字母、小写字母、数字、特殊字符",
+          "level": 0
+        },
+        {
+          "text": "示例：MyNewPwd@2026",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "步骤 3：以 --init-file 模式启动 MySQL"
+    },
+    {
+      "type": "p",
+      "text": "cd “C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin”\nmysqld --datadir=“C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data” --init-file=C:\\\\reset.sql -- console"
+    },
+    {
+      "type": "p",
+      "text": "参数说明：\n–datadir 指定数据目录位置（关键！）\n–init-file 启动时自动执行指定的 SQL 文件\n–console 将日志输出到控制台，便于观察"
+    },
+    {
+      "type": "p",
+      "text": "执行现象："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "该命令会以前台模式运行，窗口不会自动关闭",
+          "level": 0
+        },
+        {
+          "text": "日志会持续输出，显示 MySQL 正常启动",
+          "level": 0
+        },
+        {
+          "text": "不会出现 “Shutdown complete”，这是正常的——因为 MySQL 正在前台运行等待连接",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "步骤 4：验证密码是否重置成功"
+    },
+    {
+      "type": "p",
+      "text": "保持第一个窗口运行状态，新开一个管理员命令提示符窗口，测试登录："
+    },
+    {
+      "type": "p",
+      "text": "cd “C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin”\nmysql -u root -p"
+    },
+    {
+      "type": "p",
+      "text": "输入步骤 2 中设置的新密码，如果能成功进入 mysql> 提示符，说明密码已重置成功。"
+    },
+    {
+      "type": "h4",
+      "text": "步骤 5：清理并正常重启服务"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "关闭前台运行的 MySQL 窗口（按 Ctrl+C 或直接关闭）",
+          "level": 0
+        },
+        {
+          "text": "删除临时 SQL 文件（防止密码泄露）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tdel C:\\\\reset.sql"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "以 Windows 服务方式正常启动 MySQL：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tnet start MySQL80"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "最终验证：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "\tmysql -u root -p\n\t输入新密码，确认可以正常登录。"
+    },
+    {
+      "type": "h3",
+      "text": "四、关键经验总结"
+    },
+    {
+      "type": "table",
+      "head": [
+        "序号",
+        "关键点",
+        "说明"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "1",
+          "数据目录路径",
+          "Windows 下实际数据目录通常在 C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data，而非安装目录下的 data 文件夹。ProgramData 是隐藏文件夹，需在文件管理器地址栏直接输入路径访问。"
+        ],
+        [
+          "2",
+          "MySQL 8.0.30 的 Bug",
+          "该版本使用 --skip-grant-tables 会触发异常 0x16 崩溃，应改用 --init-file 方式。若条件允许，建议升级到 8.0.35+。"
+        ],
+        [
+          "3",
+          "–init-file 的行为",
+          "该模式下 MySQL 会以前台进程运行，不会自动退出。执行完 SQL 文件后，MySQL 继续保持运行状态，需手动关闭窗口后再正常启动服务。"
+        ],
+        [
+          "4",
+          "密码复杂度",
+          "MySQL 8.0 默认启用了密码验证插件，新密码必须满足复杂度要求，否则重置会失败。"
+        ],
+        [
+          "5",
+          "服务名确认",
+          "Windows 上 MySQL 服务名不一定是 MySQL80，可能是 MySQL、MySQL57 等。可通过 services.msc 查看准确名称。"
+        ]
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "五、快速命令速查表"
+    },
+    {
+      "type": "p",
+      "text": "REM 1. 停止服务\nnet stop MySQL80\ntaskkill /f /im mysqld.exe"
+    },
+    {
+      "type": "p",
+      "text": "REM 2. 创建重置文件（C:\\\\reset.sql）\nREM 内容：ALTER USER ‘root’@‘localhost’ IDENTIFIED BY ‘新密码’; FLUSH PRIVILEGES;"
+    },
+    {
+      "type": "p",
+      "text": "REM 3. 前台启动执行重置\ncd “C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin”\nmysqld --datadir=“C:\\\\ProgramData\\\\MySQL\\\\MySQL Server 8.0\\\\Data” --init-file=C:\\\\reset.sql --console"
+    },
+    {
+      "type": "p",
+      "text": "REM 4. 新窗口验证登录\nmysql -u root -p"
+    },
+    {
+      "type": "p",
+      "text": "REM 5. 关闭前台窗口，删除临时文件，正常启动服务\ndel C:\\\\reset.sql\nnet start MySQL80"
+    },
+    {
+      "type": "h3",
+      "text": "六、注意事项"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "必须以管理员身份运行命令提示符，否则可能因权限不足导致操作失败。",
+          "level": 0
+        },
+        {
+          "text": "如果 net stop 提示服务名无效，请通过 services.msc 查看准确的 MySQL 服务名称。",
+          "level": 0
+        },
+        {
+          "text": "重置密码后，建议立即删除 reset.sql 文件，避免明文密码泄露风险。",
+          "level": 0
+        },
+        {
+          "text": "如果使用 --init-file 后 MySQL 仍然崩溃，可考虑升级到 MySQL 8.0.35 或更高版本。",
+          "level": 0
+        },
+        {
+          "text": "数据目录路径中的 ProgramData 是隐藏文件夹，在 CMD 中可直接访问，但在文件资源管理器中需显示隐藏项目才能看到。",
+          "level": 0
+        }
+      ]
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/164466599?spm=1001.2014.3001.5501"
+}

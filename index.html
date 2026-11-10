@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深空观测站</title>
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/subpage.css">
+<link rel="stylesheet" href="css/portfolio.css">
+<link rel="stylesheet" href="css/blog.css">
+</head>
+<body>
+
+  <div id="starfield"></div>
+  <div id="hint">[ 开始探索 ]</div>
+  <div id="planet-container"></div>
+  <div id="satellite-container"></div>
+
+  <div id="menu-container">
+    <div class="menu-item">
+      <div class="menu-line"></div>
+      <span class="menu-text">BLOG - 博 客</span>
+    </div>
+    <div class="menu-item">
+      <div class="menu-line"></div>
+      <span class="menu-text">PORTFOLIO - 作 品</span>
+    </div>
+  </div>
+
+  <script>
+    /* file:// 下 ES 模块与 fetch 都会被浏览器拦截，
+       连错误兜底都来不及渲染，所以在入口处先给出明确指引。 */
+    if (location.protocol === 'file:') {
+      document.body.insertAdjacentHTML('beforeend', `
+        <div style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;
+                    background:#060608;color:#f2f2ef;padding:40px;
+                    font:14px/1.9 ui-monospace,SFMono-Regular,Consolas,monospace">
+          <div style="max-width:560px">
+            <p style="font-size:20px;letter-spacing:.2em;margin-bottom:24px">[ SITE REQUIRES HTTP ]</p>
+            <p style="color:rgba(242,242,239,.7);margin-bottom:24px">
+              本站需要读取 <code>data/posts/</code> 下的 JSON，并使用了 ES 模块。<br>
+              在 <code>file://</code> 协议下，浏览器会拦截这两者，因此请用本地服务器打开。
+            </p>
+            <p style="color:rgba(242,242,239,.5);margin-bottom:8px">在 www/ 目录执行：</p>
+            <pre style="padding:14px 18px;border:1px solid rgba(242,242,239,.16);color:#fff">python -m http.server 8000</pre>
+            <p style="color:rgba(242,242,239,.5);margin-top:24px">
+              然后访问 <span style="color:#fff">http://localhost:8000/</span>
+            </p>
+          </div>
+        </div>
+      `);
+    }
+  </script>
+
+  <script src="js/vendor/three.min.js"></script>
+  <script src="js/vendor/gsap.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>

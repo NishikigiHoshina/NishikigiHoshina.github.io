@@ -1,0 +1,193 @@
+{
+  "format": "blocks",
+  "no": "015",
+  "category": "开发工具",
+  "title": "Git 分支历史交错问题完整修复指南",
+  "date": "2026-09-07",
+  "readingMinutes": 6,
+  "words": 2250,
+  "excerpt": "以下是你实际执行的操作步骤：",
+  "body": [
+    {
+      "type": "h2",
+      "text": "—— 从误操作到代码恢复全流程记录"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "一、问题背景与完整案例描述"
+    },
+    {
+      "type": "h3",
+      "text": "1.1 你的实际操作流程（完整还原）"
+    },
+    {
+      "type": "p",
+      "text": "以下是你实际执行的操作步骤："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "**初始状态**：你在本地 main 分支上，远程仓库地址变更，需要测试新地址",
+          "level": 0
+        },
+        {
+          "text": "**本地提交**：你在本地做了一次提交（我们称之为 Commit A），包含了你需要的重要代码",
+          "level": 0
+        },
+        {
+          "text": "**执行 fetch**：为了测试新仓库地址，执行了 `git fetch origin`",
+          "level": 0
+        },
+        {
+          "text": "**误操作**：看到本地和远程有分歧，执行了 `git reset --hard origin/main`",
+          "level": 0
+        },
+        {
+          "text": "**发现问题**：本地代码变为了旧版远程仓库的代码，Commit A 丢失了",
+          "level": 0
+        },
+        {
+          "text": "**找回代码**：通过 `git reflog` 找到 Commit A，用 `git reset --hard <commit-hash>` 恢复",
+          "level": 0
+        },
+        {
+          "text": "**新问题**：恢复后尝试推送，提示本地落后于远程，需要先 pull",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "1.2 当前状态总结"
+    },
+    {
+      "type": "table",
+      "head": [
+        "项目",
+        "状态"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "本地 main 分支",
+          "指向 Commit A（你需要的代码，基于旧版本）"
+        ],
+        [
+          "远程 origin/main",
+          "指向较新的提交（可能有 3 个远程独有的提交）"
+        ],
+        [
+          "你的需求",
+          "将 Commit A 推送到远程仓库"
+        ],
+        [
+          "你的担忧",
+          "执行 pull 后 Commit A 是否会丢失"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "二、关键问题解答"
+    },
+    {
+      "type": "h3",
+      "text": "核心问题：执行 git pull 后，Commit A 会丢失吗？"
+    },
+    {
+      "type": "p",
+      "text": "**直接回答：不会！**"
+    },
+    {
+      "type": "p",
+      "text": "无论使用哪种 pull 方式，Commit A 都会被保留："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "**git pull --rebase**：将 Commit A \"挪到\"远程最新提交的后面",
+          "level": 0
+        },
+        {
+          "text": "**git pull（默认 merge）**：将 Commit A 和远程提交合并，产生合并提交",
+          "level": 0
+        },
+        {
+          "text": "**git push --force**：直接用 Commit A 覆盖远程（不推荐）",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "为什么不会丢失？"
+    },
+    {
+      "type": "p",
+      "text": "Git 的 pull 操作本质是："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "获取远程提交（fetch）",
+          "level": 0
+        },
+        {
+          "text": "将远程提交和本地提交合并（merge）或变基（rebase）",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "无论哪种方式，本地提交都是合并的一部分，不会被丢弃。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "三、三种解决方案完整对比"
+    },
+    {
+      "type": "h3",
+      "text": "3.1 方案对比表"
+    },
+    {
+      "type": "p",
+      "text": "+----------------+------------------+------------------+------------------+------------------+\n| 方案            | 操作命令          | Commit A 状态    | 历史是否线性      | 风险等级         |\n+----------------+------------------+------------------+------------------+------------------+\n| 方案一：rebase  | git pull --rebase | 保留（移到最前）  | 是（线性历史）    | 低               |\n+----------------+------------------+------------------+------------------+------------------+\n| 方案二：merge   | git pull          | 保留（合并）      | 否（有合并提交）  | 低               |\n+----------------+------------------+------------------+------------------+------------------+\n| 方案三：force   | git push --force  | 保留（覆盖远程）  | 是（但会丢失远程）| 高（不推荐）     |\n+----------------+------------------+------------------+------------------+------------------+"
+    },
+    {
+      "type": "h3",
+      "text": "3.2 方案一：git pull --rebase（强烈推荐）"
+    },
+    {
+      "type": "p",
+      "text": "这是最干净、最安全的方式。"
+    },
+    {
+      "type": "p",
+      "text": "**完整操作步骤：**"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# ===== 步骤 1：确认当前状态 =====\n# 查看当前所在分支\ngit branch\n# 输出应该显示：* main\n\n# 查看当前提交历史\ngit log --oneline -3\n# 输出示例：\n# abc1234 (HEAD -> main) 你的重要提交 Commit A\n# def5678 之前的提交\n\n# 查看远程分支状态\ngit log origin/main --oneline -3\n# 输出示例：\n# xyz9999 (origin/main) 远程提交3\n# wwww8888 远程提交2\n# vvvv7777 远程提交1\n\n# ===== 步骤 2：创建备份（安全第一） =====\ngit branch backup-commit-a\n# 创建一个备份分支，万一需要恢复\n\n# 验证备份已创建\ngit branch\n# 输出：\n#   backup-commit-a\n# * main\n\n# ===== 步骤 3：获取远程最新信息 =====\ngit fetch origin\n# 确保本地有远程的最新状态\n\n# ===== 步骤 4：执行 rebase 拉取 =====\ngit pull --rebase origin main\n\n# 执行过程说明：\n# 1. Git 将 Commit A 暂存起来\n# 2. 将远程的 3 个提交应用到本地\n# 3. 将 Commit A 应用在最新提交之上\n# 4. 如果有冲突，会暂停并提示\n\n# ===== 步骤 5：查看结果 =====\ngit log --oneline --graph -5\n# 输出示例（历史变成线性）：\n# * abc1234 (HEAD -> main) 你的重要提交 Commit A\n# * xyz9999 远程提交3\n# * wwww8888 远程提交2\n# * vvvv7777 远程提交1\n# * def5678 基础提交\n\n# ===== 步骤 6：推送到远程 =====\ngit push origin main\n\n# 推送成功，不再有落后提示\n\n# ===== 步骤 7：清理备份 =====\ngit branch -d backup-commit-a\n# 确认一切正常后删除备份分支"
+    }
+  ]
+}

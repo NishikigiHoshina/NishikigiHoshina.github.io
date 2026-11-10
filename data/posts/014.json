@@ -1,0 +1,1398 @@
+{
+  "format": "blocks",
+  "no": "014",
+  "category": "计算机基础",
+  "title": "Linux系统常用命令",
+  "date": "2026-09-02",
+  "readingMinutes": 31,
+  "words": 10769,
+  "excerpt": "首先，需要创建一个新的用户。可以使用 adduser 或 useradd 命令。",
+  "body": [
+    {
+      "type": "h2",
+      "text": "系统指令"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "关机",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "#立即关机并断电:\nsudo shutdown -P now\n\n#延迟关机（5 分钟后执行）\nsudo shutdown -P +5\n\n#指定时间关机（晚上 22:00 执行）\nsudo shutdown -P 22:00\n\n#取消已计划的关机\nsudo shutdown -c\n\n#可附加自定义广播消息：\nsudo shutdown -P +2 \"系统将于2分钟后关机，请保存工作。\"\n\n#快速断电关机（等效于 shutdown -P now）\nsudo poweroff\n\n#使用 systemctl 命令\n#systemd 环境下统一接口\nsudo systemctl poweroff"
+    },
+    {
+      "type": "h2",
+      "text": "账户管理"
+    },
+    {
+      "type": "h3",
+      "text": "创建用户"
+    },
+    {
+      "type": "p",
+      "text": "首先，需要创建一个新的用户。可以使用 adduser 或 useradd 命令。"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "使用 adduser 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo adduser 用户名\nsudo passwd 用户名\n\n# 例如，添加一个名为 sysadm 的用户并设置密码：\n\nsudo adduser sysadm\nsudo passwd sysadm\n\n# 此命令会自动为用户创建主目录并设置系统的 shell 版本。"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "使用 useradd 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo useradd -m -s /bin/bash 用户名\nsudo passwd 用户名\n\n# 例如，添加一个名为 sysadm 的用户并设置密码：\n\nsudo useradd -m -s /bin/bash sysadm\nsudo passwd sysadm\n\n# 此命令需要手动指定一些参数，如主目录和 shell。"
+    },
+    {
+      "type": "h3",
+      "text": "用户shell设置"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "新建用户并为用户指定shell：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "useradd -m -s /bin/bash 用户名\npasswd 用户名"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看用户的登录 Shell",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "用户的登录 Shell 信息存储在 /etc/passwd 文件中，可以通过以下命令查看："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "grep 用户名 /etc/passwd"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "修改用户的登录 Shell： 如果需要更改现有用户的 Shell，可以使用以下命令：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "usermod -s /bin/bash 用户名"
+    },
+    {
+      "type": "h3",
+      "text": "赋予 sudo 权限"
+    },
+    {
+      "type": "p",
+      "text": "需要编辑 /etc/sudoers 文件来赋予用户 sudo 权限。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "1. 编辑 /etc/sudoers 文件\n\n使用 visudo 命令来编辑 /etc/sudoers 文件：\n\nsudo visudo\n\n2. 在文件中找到以下行：\n\nroot ALL=(ALL) ALL\n\n3. 在其下添加新用户的配置，例如：\n\nsysadm ALL=(ALL) ALL\n\n4. 保存并退出编辑器。\n\n"
+    },
+    {
+      "type": "p",
+      "text": "验证权限\n可以通过执行一个需要 sudo 权限的命令来验证配置是否成功，例如：\n`sudo service network restart`\n如果提示输入密码并成功执行命令，则表示配置成功。"
+    },
+    {
+      "type": "h2",
+      "text": "文件管理"
+    },
+    {
+      "type": "h3",
+      "text": "基础浏览操作"
+    },
+    {
+      "type": "p",
+      "text": "Linux下`..`表示上一级目录，`.`表示当前目录"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`cd + dir_name` 打开文件夹",
+          "level": 0
+        },
+        {
+          "text": "`cd ..` 返回上级文件夹",
+          "level": 0
+        },
+        {
+          "text": "`cd - ` 返回上一次所在目录(用于两目录间反复跳转不重复输入路径，快速跳转)",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "创建文件"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 使用touch可以创建一个新文件\ntouch 文件名\n\n# 使用vim也可以创建文件并进入编辑\nvim 新的文件名\n"
+    },
+    {
+      "type": "h3",
+      "text": "创建文件夹"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 使用mkdir来创建一个文件夹\nmkdir 文件夹名\n\n# 使用p参数来一次性创建多级目录\nmkdir /xxx/yyy\n"
+    },
+    {
+      "type": "h3",
+      "text": "删除文件/文件夹"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 使用rm命令\n\nrm -rf 文件夹路径\n# 删除一个非空文件夹及其所有内容\nrm -f 文件路径\n# 删除一个文件\nrm -rf -i 文件夹路径\n# 可以添加 -i 参数来逐一确认每个删除操作"
+    },
+    {
+      "type": "quote",
+      "text": "使用 rm 命令时应该小心！因为Linux没有回收站功能，命令一旦执行，删除的文件和目录就无法恢复了"
+    },
+    {
+      "type": "h3",
+      "text": "移动文件&重命名"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 使用mv来移动文件\nmv 待移动文件路径 目标路径\n\n# 如果在同级目录下移动，则可以对文件进行重命名\nmv xxx.txt yyy.txt\n# 这样xxx文件就会被命名为yyy"
+    },
+    {
+      "type": "h3",
+      "text": "文件权限"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "可以使用`chmod`来更改文件权限",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 使用chmod来更改文件权限\nchmod [权限配置] 文件名\n# 例：\nchmod 744 xxx.sh\n# Linux下用数字标识权限，可读(read-4)，可写(write-2)，可执行(execute=1)，赋予多权限时将对应数值相加即可\n# Linux下文件标识类似：\n-rw-r--r-- 1 root root 17238873 Jul  3 03:19 caddy_2.11.4_linux_amd64.tar.gz\ndrwxr-xr-x  2 root root 4096 Jul  3 03:23 modules/\n# d 表示该文件为一个目录/文件夹，没有d则说明是一个文件\n# 后面的字母表示三组权限等级划分，r为可读，w为可写，x为可执行\n# 第一组权限表示文件拥有者/创建者的权限，第二组表示同组用户对该文件的权限，第三组表示其他用户对该文件的权限\n\n# 递归更改权限\nchmod -R 777 /path/to/directory"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "可以使用`chown`来更改文件所有者",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 更改文件夹所有者 使用以下命令将文件夹的所有者更改为指定用户：\nsudo chown 用户名 文件夹名\n\n# 同时更改所有者和组 如果需要同时更改文件夹的所有者和组，可以使用以下命令：\nsudo chown 用户名:组名 文件夹名\n\n# 递归更改子目录和文件 如果需要更改文件夹及其所有子目录和文件的所有者，可以添加 -R 参数：\nsudo chown -R 用户名:组名 文件夹名"
+    },
+    {
+      "type": "h3",
+      "text": "压缩和解压"
+    },
+    {
+      "type": "p",
+      "text": "在 Linux 中，有多种命令可以用于文件和目录的压缩和解压缩操作。以下是几种常用的压缩命令及其使用方法："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "tar 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "tar 命令用于打包一个目录，并支持三种格式：.tar、.bz2 和 .gz。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "压缩\ntar -cvf [文件名].tar [文件目录] # 打包成 .tar 文件\ntar -jcvf [文件名].tar.bz2 [文件目录] # 打包成 .bz2 文件\ntar -zcvf [文件名].tar.gz [文件目录] # 打包成 .gz 文件\n\n解压缩\ntar -xvf [文件名].tar # 解压到当前目录\ntar -xvf [文件名].tar -C [文件目录] # 解压到指定目录\ntar -jxvf [文件名].tar.bz2 -C [文件目录] # 解压 .bz2 文件到指定目录\ntar -zxvf [文件名].tar.gz -C [文件目录] # 解压 .gz 文件到指定目录"
+    },
+    {
+      "type": "p",
+      "text": "常用选项"
+    },
+    {
+      "type": "p",
+      "text": "`-c`：建立新的压缩文件"
+    },
+    {
+      "type": "p",
+      "text": "`-x`：从压缩的文件中提取文件"
+    },
+    {
+      "type": "p",
+      "text": "`-f`：指定压缩文件"
+    },
+    {
+      "type": "p",
+      "text": "`-v`：显示操作过程"
+    },
+    {
+      "type": "p",
+      "text": "`-z`：支持 gzip 解压"
+    },
+    {
+      "type": "p",
+      "text": "`-j`：支持 bzip2 解压"
+    },
+    {
+      "type": "p",
+      "text": "`-C`：指定解压目录"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "7z 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "7z 命令用于高效压缩和解压缩文件。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "压缩\n7z a -t7z test.7z file # 将 file 压缩为 test.7z\n7z a -t7z ./test/test.7z file # 将 file 压缩到 test 目录下\n7z a -t7z test2.7z filename -v20m # 分卷压缩，每个卷最大 20MB\n\n解压\n7z x filename.7z # 解压到当前目录\n7z x test.7z -r -o./test # 解压到指定目录\n7z x filename.7z.001 # 解压分卷压缩的文件"
+    },
+    {
+      "type": "p",
+      "text": "常用选项"
+    },
+    {
+      "type": "p",
+      "text": "`-a`：添加文件/文件夹到压缩包"
+    },
+    {
+      "type": "p",
+      "text": "`-t`：指定压缩格式"
+    },
+    {
+      "type": "p",
+      "text": "`-o`：指定解压到的目录"
+    },
+    {
+      "type": "p",
+      "text": "`-r`：递归所有的子文件夹"
+    },
+    {
+      "type": "p",
+      "text": "`-x`：解压文件"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "zip 和 unzip 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "zip 和 unzip 命令用于创建和解压 ZIP 归档文件。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "压缩\nzip filename.zip file # 压缩单个文件\nzip -r filename.zip filedir # 压缩目录文件\n\n解压\nunzip filename.zip -d filedir # 解压到指定目录"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "rar 命令",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "rar 命令用于压缩和解压 RAR 文件。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "压缩\nrar a filename.rar filedir # 将 filedir 压缩为 filename.rar 文件\n\n解压\nrar x filename.rar dir # 解压到指定目录"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "各种压缩格式对比",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "不同压缩格式的压缩效率和压缩后文件大小有所不同。以下是一些常见格式的对比："
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "tar: 压缩前 134M，压缩后 133M\n\nbz2: 压缩前 134M，压缩后 47M\n\ngz: 压缩前 134M，压缩后 51M\n\nzip: 压缩前 134M，压缩后 52M\n\nrar: 压缩前 134M，压缩后 41M\n\n7z: 压缩前 134M，压缩后 26M"
+    },
+    {
+      "type": "h3",
+      "text": "复制"
+    },
+    {
+      "type": "p",
+      "text": "使用命令"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "cp 待复制文件 复制文件保存位置"
+    },
+    {
+      "type": "h3",
+      "text": "远程文件复制"
+    },
+    {
+      "type": "h4",
+      "text": "概述"
+    },
+    {
+      "type": "p",
+      "text": "`scp` 是 **secure copy** 的缩写，scp是linux系统下基于ssh登陆进行安全的远程文件拷贝命令。 linux 的scp命令可以在 [linux](#) 服务器之间复制文件和目录。"
+    },
+    {
+      "type": "p",
+      "text": "网络安全"
+    },
+    {
+      "type": "p",
+      "text": "因此我们可以用于写一个脚本在一台 服务器 上来向多台服务器发送文件部署代码。"
+    },
+    {
+      "type": "h4",
+      "text": "语法"
+    },
+    {
+      "type": "p",
+      "text": "`scp` 的基本语法是： `scp [选项] [参数]` 。"
+    },
+    {
+      "type": "p",
+      "text": "常用选项如下："
+    },
+    {
+      "type": "table",
+      "head": [
+        "选项",
+        "说明"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "\\-1",
+          "使用ssh协议版本1-2"
+        ],
+        [
+          "\\-2",
+          "使用ssh协议版本2"
+        ],
+        [
+          "\\-4",
+          "使用ipv4"
+        ],
+        [
+          "\\-6",
+          "使用ipv6"
+        ],
+        [
+          "\\-B",
+          "以批处理模式运行"
+        ],
+        [
+          "\\-C",
+          "使用压缩"
+        ],
+        [
+          "\\-F",
+          "指定ssh配置文件"
+        ],
+        [
+          "\\-l",
+          "指定宽带限制"
+        ],
+        [
+          "\\-o",
+          "指定使用的ssh选项"
+        ],
+        [
+          "\\-P",
+          "指定远程主机的端口号，如果默认 SSH 端口不是 22，则使用此选项指定 SSH 端口。"
+        ],
+        [
+          "\\-p",
+          "保留文件的最后修改时间，最后访问时间和权限模式"
+        ],
+        [
+          "\\-q",
+          "不显示复制进度"
+        ],
+        [
+          "\\-r",
+          "以递归方式复制，可用于复制目录"
+        ]
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "使用"
+    },
+    {
+      "type": "h4",
+      "text": "从远程复制文件到本地"
+    },
+    {
+      "type": "p",
+      "text": "从远程服务器复制 **指定文件** 到本地主机的指定目录下，基本语法格式如下："
+    },
+    {
+      "type": "p",
+      "text": "计算机服务器"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp user@ip:/path/to/remote/file /path/to/local/directory"
+    },
+    {
+      "type": "p",
+      "text": "参数说明："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`user@ip:`：指的是用户名和远程服务器的IP地址，如 `root@192.168.3.5` 。注意，用户名和服务器IP地址都是远程服务器的而不是本地服务器的。注意`:`冒号是必须的。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/remote/file` ：指的是远程服务器上你想要复制的文件，如 `/root/.ssh/restart.sh` 。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/local/directory` ：指的是将远程服务器上的文件复制到本地后存放在哪个目录，如 `/root/home` 。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "例如，将远程服务器上的 `/root/test.txt` 文件复制 到本地服务器上的 `/root/.ssh` 目录下注意，需要输入远程服务器指定用户的密码。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp root@192.168.40.90:/root/test.txt /root/.ssh"
+    },
+    {
+      "type": "image",
+      "alt": "在这里插入图片描述",
+      "src": "https://i-blog.csdnimg.cn/blog_migrate/8c02ec600e8dd57465a56180ec27e248.png",
+      "title": ""
+    },
+    {
+      "type": "h4",
+      "text": "从远程复制目录到本地"
+    },
+    {
+      "type": "p",
+      "text": "从远程服务器复制 **指定目录** 到本地主机的指定目录下，基本语法格式如下："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp -r user@ip:/path/to/remote/directory /path/to/local/directory"
+    },
+    {
+      "type": "p",
+      "text": "参数说明："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`-r` ：是一个选项，表示以递归的方式复制，复制目录的时候使用。",
+          "level": 0
+        },
+        {
+          "text": "`user@ip:`：指的是用户名和远程服务器的IP地址，如 `root@192.168.3.5` 。注意，用户名和服务器IP地址都是远程服务器的而不是本地服务器的。注意`:`冒号是必须的。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/remote/directory` ：指的是远程服务器上你想要复制的目录。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/local/directory` ：指的是将远程服务器上的目录复制到本地后存放在哪个目录下，如 `/root/home` 。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "例如，将远程服务器上的 `/root/.ssh/` 文件夹复制到本地服务器上的 `/root/home` 目录下，注意，需要输入远程服务器指定用户的密码。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp -r root@192.168.40.90:/root/.ssh /root/home"
+    },
+    {
+      "type": "image",
+      "alt": "在这里插入图片描述",
+      "src": "https://i-blog.csdnimg.cn/blog_migrate/b23d2c29a7202f753c5377b7b501c77d.png",
+      "title": ""
+    },
+    {
+      "type": "h4",
+      "text": "上传本地文件到远程"
+    },
+    {
+      "type": "p",
+      "text": "可以将本地服务器上的指定文件上传到远程服务器上的指定目录下，语法如下："
+    },
+    {
+      "type": "p",
+      "text": "计算机服务器"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp /path/to/local/file user@ip:/path/to/remote/directory"
+    },
+    {
+      "type": "p",
+      "text": "参数说明："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`user@ip:`：指的是用户名和远程服务器的IP地址，如 `root@192.168.3.5` 。注意，用户名和服务器IP地址都是远程服务器的而不是本地服务器的。注意`:`冒号是必须的。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/local/file` ：指的是本地服务器待上传的文件，如 `/root/.ssh/local.txt` 。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/remote/directory` ：指的是将本地服务器上的文件上传后存放在哪个目录，如 `/root/home` 。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "例如，将本地服务器上的 `/root/.ssh/local.txt` 文件上传到 `192.168.40.90` 这台远程服务器上的 `/root/home` 目录下。注意，需要输入远程服务器指定用户的密码。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp /root/.ssh/local.txt root@192.168.40.90:/root/home"
+    },
+    {
+      "type": "image",
+      "alt": "在这里插入图片描述",
+      "src": "https://i-blog.csdnimg.cn/blog_migrate/86f63084643585e452a8df7fc59668c3.png",
+      "title": ""
+    },
+    {
+      "type": "h4",
+      "text": "上传本地目录到远程"
+    },
+    {
+      "type": "p",
+      "text": "可以将本地服务器上的指定文件上传到远程服务器上的指定目录下，语法如下："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp -r /path/to/local/directory user@ip:/path/to/remote/directory"
+    },
+    {
+      "type": "p",
+      "text": "参数说明："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`-r` ：是一个选项，表示以递归的方式复制，复制目录的时候使用。",
+          "level": 0
+        },
+        {
+          "text": "`user@ip:`：指的是用户名和远程服务器的IP地址，如 `root@192.168.3.5` 。注意，用户名和服务器IP地址都是远程服务器的而不是本地服务器的。注意`:`冒号是必须的。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/remote/directory` ：指的是远程服务器上你想要复制的目录。",
+          "level": 0
+        },
+        {
+          "text": "`/path/to/local/directory` ：指的是将远程服务器上的目录复制到本地后存放在哪个目录下，如 `/root/home` 。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "例如，将本地服务器上的 `/root/.ssh` 文件夹上传到远程服务器，放在 `/root/home` 目录下，注意，需要输入远程服务器指定用户的密码。"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "scp -r /root/.ssh/ root@192.168.40.90:/root/home"
+    },
+    {
+      "type": "h2",
+      "text": "磁盘管理"
+    },
+    {
+      "type": "quote",
+      "text": "以Ubuntu系统为例"
+    },
+    {
+      "type": "p",
+      "text": "在 Ubuntu 系统中，可以通过多种命令快速查看硬盘空间的使用情况。以下是常用方法及其步骤。"
+    },
+    {
+      "type": "h3",
+      "text": "方法 1: 使用 df 命令"
+    },
+    {
+      "type": "p",
+      "text": "`df` 命令用于显示文件系统的磁盘使用情况。"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "以人类可读格式查看磁盘空间： `df -h`",
+          "level": 0
+        },
+        {
+          "text": "查看文件系统类型: `df -Th`",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "方法 2: 使用 du 命令"
+    },
+    {
+      "type": "p",
+      "text": "du 命令用于查看目录或文件的磁盘使用情况。"
+    },
+    {
+      "type": "p",
+      "text": "查看某个目录的总大小: `du -sh /path/to/directory`\n查看当前目录下所有文件和子目录的大小：`du -h --max-depth=1`"
+    },
+    {
+      "type": "h3",
+      "text": "清理磁盘空间"
+    },
+    {
+      "type": "p",
+      "text": "清理不需要的apt依赖：`sudo apt-get clean`\n删除不再使用的旧内核：`sudo apt-get autoremove --purge`"
+    },
+    {
+      "type": "h2",
+      "text": "进程管理"
+    },
+    {
+      "type": "h3",
+      "text": "使用ps命令查看进程"
+    },
+    {
+      "type": "p",
+      "text": "ps命令是用于显示当前运行的进程信息的工具。它可以展示各种详细的进程信息，包括进程ID、CPU使用率、内存使用率、进程状态等。以下是一些常用的ps命令参数："
+    },
+    {
+      "type": "p",
+      "text": "`ps aux` ：显示所有用户的所有进程信息。"
+    },
+    {
+      "type": "p",
+      "text": "`ps -ef` ：以全格式显示所有进程。"
+    },
+    {
+      "type": "p",
+      "text": "`ps -u 用户名` ：显示指定用户的进程。"
+    },
+    {
+      "type": "p",
+      "text": "`ps -A`或`ps -e` ：显示所有进程。"
+    },
+    {
+      "type": "p",
+      "text": "`ps -a` ：显示当前终端下的所有进程，包括其他用户的进程。"
+    },
+    {
+      "type": "p",
+      "text": "例如，要查看所有进程，可以使用以下命令：\n`ps aux`"
+    },
+    {
+      "type": "p",
+      "text": "如果想要查找特定的进程，可以结合grep命令进行过滤：\n`ps aux | grep 进程名`"
+    },
+    {
+      "type": "h3",
+      "text": "使用top命令实时监控进程"
+    },
+    {
+      "type": "p",
+      "text": "除了ps命令，top命令也是一个非常有用的工具，它可以实时显示系统中各个进程的资源占用情况。top命令提供了一个动态的视图，可以看到CPU和内存的即时使用情况，以及正在运行的进程列表。只需在终端中输入top，就可以启动这个工具。启动该工具后按`q`可以退出工具，按`h`可以查看帮助信息。"
+    },
+    {
+      "type": "h2",
+      "text": "服务管理"
+    },
+    {
+      "type": "p",
+      "text": "**在Ubuntu中自定义用户服务**"
+    },
+    {
+      "type": "h3",
+      "text": "步骤(1)：创建服务文件"
+    },
+    {
+      "type": "p",
+      "text": "首先，您需要为您的服务创建一个服务文件。这个文件将定义您的服务及其启动和停止的方式。服务文件通常位于/etc/systemd/system/目录下。以一个名为my_service.service的服务为例，您可以使用下面的命令来创建服务文件："
+    },
+    {
+      "type": "p",
+      "text": "`sudonano /etc/systemd/system/my_service.service`\n在打开的编辑器中，输入以下内容："
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "[Unit]\nDescription=My Custom Service\nAfter=network.target\n\n[Service]\nExecStart=/path/to/your/executable\nRestart=always\nUser=your_username\nGroup=your_groupname\n\n[Install]\nWantedBy=multi-user.target\n"
+    },
+    {
+      "type": "quote",
+      "text": "Description：服务的描述。\nAfter：指定服务依赖的其他服务，例如network.target表示网络服务。\nExecStart：指定服务启动时执行的命令。\nRestart：定义服务失败时的重启策略，always表示总是重启。\nUser和Group：指定运行服务的用户和组。\nWantedBy：指定服务应该在哪个目标下启动，multi-user.target是多用户图形界面环境。"
+    },
+    {
+      "type": "p",
+      "text": "保存并退出编辑器（在nano中，使用Ctrl+X，然后按Y并回车）。"
+    },
+    {
+      "type": "h3",
+      "text": "步骤(2)：启用服务"
+    },
+    {
+      "type": "p",
+      "text": "创建服务文件后，您需要启用该服务以确保它在系统启动时自动启动："
+    },
+    {
+      "type": "p",
+      "text": "`sudo systemctl enable my_service.service`"
+    },
+    {
+      "type": "h3",
+      "text": "步骤(3)：启动服务"
+    },
+    {
+      "type": "p",
+      "text": "要立即启动服务（而不是等到下一次系统启动），您可以使用以下命令："
+    },
+    {
+      "type": "p",
+      "text": "`sudo systemctl start my_service.service`"
+    },
+    {
+      "type": "h3",
+      "text": "步骤(4)：检查服务状态"
+    },
+    {
+      "type": "p",
+      "text": "要检查服务的状态，您可以使用以下命令："
+    },
+    {
+      "type": "p",
+      "text": "`sudo systemctl status my_service.service`\n这将显示服务的状态，包括它是否正在运行，以及最近的日志输出。"
+    },
+    {
+      "type": "h3",
+      "text": "步骤(5)：重启和停止服务"
+    },
+    {
+      "type": "p",
+      "text": "如果需要，您可以使用以下命令重启或停止服务："
+    },
+    {
+      "type": "p",
+      "text": "`sudo systemctl restart my_service.service`\n`sudo systemctl stop my_service.service`"
+    },
+    {
+      "type": "quote",
+      "text": "使用systemctl在Ubuntu系统中添加启动项是一个简单而强大的过程。通过创建服务文件并使用systemctl命令启用、启动和管理服务，您可以确保您的服务在系统启动时自动运行，并且可以轻松地控制它们的状态。"
+    },
+    {
+      "type": "h2",
+      "text": "端口管理"
+    },
+    {
+      "type": "quote",
+      "text": "在 Linux 系统中，可以通过多种方法查看端口的使用情况，包括指定端口、所有端口或某个服务的占用情况。以下是常用的方法及步骤："
+    },
+    {
+      "type": "h3",
+      "text": "方法 1: 使用 netstat 命令"
+    },
+    {
+      "type": "p",
+      "text": "查看所有监听的端口： `netstat -tunlp`\n参数说明：-t (TCP)、-u (UDP)、-n (数字显示)、-l (监听状态)、-p (进程信息)。"
+    },
+    {
+      "type": "p",
+      "text": "查看特定端口的占用情况：\n`netstat -tunlp | grep <端口号>`"
+    },
+    {
+      "type": "h3",
+      "text": "方法 2: 使用 lsof 命令"
+    },
+    {
+      "type": "p",
+      "text": "查看指定端口的占用情况：\n`lsof -i:<端口号>`"
+    },
+    {
+      "type": "p",
+      "text": "查看所有打开的网络端口：\n`lsof -i`"
+    },
+    {
+      "type": "h3",
+      "text": "方法 3: 使用 ss 命令"
+    },
+    {
+      "type": "p",
+      "text": "查看所有监听的端口：\n`ss -tunlp`"
+    },
+    {
+      "type": "p",
+      "text": "查看特定端口的占用情况：\n`ss -tunlp | grep <端口号>`"
+    },
+    {
+      "type": "p",
+      "text": "关闭占用端口的进程： 找到占用端口的进程 ID (PID)，例如通过 netstat 或 lsof。使用 kill 命令终止进程：\n`kill -9 <PID>`\n示例：`kill -9 26993`"
+    },
+    {
+      "type": "h3",
+      "text": "最佳实践"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "使用 sudo 提升权限以确保命令执行成功。",
+          "level": 0
+        },
+        {
+          "text": "如果需要频繁检查，可以将常用命令写入脚本以提高效率。",
+          "level": 0
+        },
+        {
+          "text": "确保在关闭进程前，确认其对系统和服务的影响。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "防火墙管理"
+    },
+    {
+      "type": "quote",
+      "text": "在 Ubuntu 系统中，ufw（Uncomplicated Firewall） 是一个常用的防火墙管理工具，我们可以利用它来生成底层的iptables规则。以下是查看防火墙状态的具体方法："
+    },
+    {
+      "type": "h3",
+      "text": "查看防火墙状态"
+    },
+    {
+      "type": "p",
+      "text": "打开终端，输入以下命令： sudo ufw status 如果显示 Status: inactive，表示防火墙未启用。 如果显示 Status: active，表示防火墙已启用，并会列出当前的规则。"
+    },
+    {
+      "type": "h3",
+      "text": "启用防火墙"
+    },
+    {
+      "type": "p",
+      "text": "如果需要启用防火墙，可以执行以下命令："
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw enable`"
+    },
+    {
+      "type": "p",
+      "text": "启用后，默认规则通常是拒绝所有传入连接，但允许所有传出连接。"
+    },
+    {
+      "type": "h3",
+      "text": "关闭防火墙"
+    },
+    {
+      "type": "p",
+      "text": "若需要关闭防火墙，可以使用以下命令："
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw disable`"
+    },
+    {
+      "type": "p",
+      "text": "关闭后，所有连接将不再受到防火墙限制。"
+    },
+    {
+      "type": "h3",
+      "text": "查看当前规则"
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw status verbose`"
+    },
+    {
+      "type": "p",
+      "text": "查看详细信息（包括日志级别、默认策略等）"
+    },
+    {
+      "type": "h3",
+      "text": "其他常用命令"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "重启防火墙：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw reload`"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "查看开放端口：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw status numbered`"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "开放特定端口（如80端口）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw allow 80`"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "关闭特定端口（如80端口）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw delete allow 80`"
+    },
+    {
+      "type": "h3",
+      "text": "进阶配置"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "ufw向发送者发送拒绝响应",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "sudo ufw reject <port/service>\n# 例如：\nsudo ufw reject 8081"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拒绝来自特定IP地址的所有输入流量：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "sudo ufw deny <port/service>\n# 例如：\nsudo ufw deny from 192.168.1.1\nsudo ufw deny from 192.168.1.1 to any"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拒绝指定的端口（例如，拒绝TCP的22端口）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw deny 22/tcp`"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拒绝特定网络的流量（例如，拒绝192.168.1.0/24网络）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw deny from 192.168.1.0/24`"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "拒绝特定协议的流量（例如，拒绝UDP流量）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "`sudo ufw deny proto udp`"
+    },
+    {
+      "type": "h3",
+      "text": "注意事项"
+    },
+    {
+      "type": "quote",
+      "text": "在远程服务器上操作时，确保 SSH 的默认端口（22）已开放，否则可能会断开连接。  \n修改规则后建议使用 sudo ufw reload 确保配置生效。\n可以在`/etc/ufw/user.rules`中查看生成的规则，也可以直接在该文件中修改配置"
+    },
+    {
+      "type": "p",
+      "text": "生成的规则参考："
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "### RULES ###\n\n### tuple ### allow any any 0.0.0.0/0 any 0.0.0.0/0 in_lo\n-A ufw-user-input -i lo -j ACCEPT\n\n### tuple ### allow any any 0.0.0.0/0 any 0.0.0.0/0 out_lo\n-A ufw-user-output -o lo -j ACCEPT\n\n### tuple ### allow any 80 0.0.0.0/0 any 0.0.0.0/0 in\n-A ufw-user-input -p tcp --dport 80 -j ACCEPT\n-A ufw-user-input -p udp --dport 80 -j ACCEPT\n\n### tuple ### allow any 443 0.0.0.0/0 any 0.0.0.0/0 in\n-A ufw-user-input -p tcp --dport 443 -j ACCEPT\n-A ufw-user-input -p udp --dport 443 -j ACCEPT\n\n### tuple ### allow any any 0.0.0.0/0 any 192.168.228.1 in\n-A ufw-user-input -s 192.168.228.1 -j ACCEPT\n\n### tuple ### deny any any 0.0.0.0/0 any 0.0.0.0/0 in_eth0\n-A ufw-user-input -i eth0 -j DROP\n\n### END RULES ###\n"
+    },
+    {
+      "type": "h3",
+      "text": "配置参考"
+    },
+    {
+      "type": "p",
+      "text": "来自一次实际配置情况："
+    },
+    {
+      "type": "code",
+      "lang": "shell",
+      "text": "# 1. 重置 UFW（可选，如果已有规则混乱）\nsudo ufw reset\n\n# 2. 设置默认策略：默认拒绝所有入站，允许出站\nsudo ufw default deny incoming\nsudo ufw default allow outgoing\n\n# 3. 允许回环接口（本机内部通信）\nsudo ufw allow in on lo\nsudo ufw allow out on lo\n\n# 4. 允许 HTTP (80)\nsudo ufw allow 80/tcp\nsudo ufw allow 80/udp\n\n# 5. 允许 HTTPS (443)\nsudo ufw allow 443/tcp\nsudo ufw allow 443/udp\n\n# 6. 允许来自 192.168.228.1 的所有流量\nsudo ufw allow from 192.168.228.1\n\n# 7. 拒绝 eth0 上其他所有入站流量\nsudo ufw deny in on eth0\n\n# 8. 启用防火墙\nsudo ufw enable"
+    },
+    {
+      "type": "h2",
+      "text": "SSH远程连接服务"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo service ssh start\n#启动ssh服务\n\nsudo service ssh status\n#查看ssh服务状态"
+    },
+    {
+      "type": "h2",
+      "text": "Linux系统排查初级指令"
+    },
+    {
+      "type": "h3",
+      "text": "账号安全排查："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "`awk -F: '$3==0{print $1}' /etc/passwd`\t#查看uid为0的用户（正常只有root，否则说明被入侵了）",
+          "level": 0
+        },
+        {
+          "text": "`more /etc/sudoers |grep -v \"^#\\|^$\" | grep \"ALL=(ALL)\"`\t#查看操作权限为sudo的用户",
+          "level": 0
+        },
+        {
+          "text": "`cat /etc/passwd | grep /bin/bash`\t#查看本系统上的所有用户信息",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "进程排查："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "`ps -a`\t#查看终端上的所有进程，包括其他用户的",
+          "level": 0
+        },
+        {
+          "text": "`ps -e`\t#列出程序时，显示其所有的环境变量",
+          "level": 0
+        },
+        {
+          "text": "`ps -f`\t#显示PID，PPID，C与system栏位",
+          "level": 0
+        },
+        {
+          "text": "`ps -U root -u root -N`\t#检查以非root权限在运行的程序",
+          "level": 0
+        },
+        {
+          "text": "`ps -u root`\t#检查以root权限运行的程序",
+          "level": 0
+        },
+        {
+          "text": "`ps -ef | awk '{print}' | sort -n |uniq >1`\t#查看隐藏的进程 sort将文本文件以行为单位排序\tuniq命令用于删除文本文件中重复出现的行列，一般与sort结合使用",
+          "level": 0
+        },
+        {
+          "text": "`ls /proc | sort -n |uniq >2`\t#查看隐藏的进程",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "文件排查："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "`ls -la`\t#查看当前目录下的所有文件，包括隐藏文件",
+          "level": 0
+        },
+        {
+          "text": "`whereis + 文件名`\t#全盘查找该名称文件，并显示出路径",
+          "level": 0
+        },
+        {
+          "text": "`ls -al + 文件名`\t#查看文件创建时间",
+          "level": 0
+        },
+        {
+          "text": "`find ./ -mtime 0`\t#查看在24小时内修改过的文件",
+          "level": 0
+        },
+        {
+          "text": "`find / -name \"*.php\" `\t\t#列出某后缀名的所有文件",
+          "level": 0
+        },
+        {
+          "text": "`sudo gpasswd -d alice docker `    # 示例：把 alice 踢出 docker 组",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "文件编辑/文本输入"
+    },
+    {
+      "type": "h3",
+      "text": "Vim编辑器命令"
+    },
+    {
+      "type": "p",
+      "text": "文件打开时为预览模式，使用`A`或`I`进入编辑模式"
+    },
+    {
+      "type": "p",
+      "text": "预览模式下输入`:`以执行指令"
+    },
+    {
+      "type": "p",
+      "text": "常用命令如下:"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`:q` quit 退出文件",
+          "level": 0
+        },
+        {
+          "text": "`:w` write 写入/保存文件",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "有时候文件受保护，而忘记赋予写入权限就编辑时，使用write命令会报错，同时会出现无法正常退出的情况"
+    },
+    {
+      "type": "p",
+      "text": "这时候需要用`!`强制执行命令"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`:q!` 强制退出编辑",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "文本编辑失败时，Linux下通常会生成一个缓存副本文件，里面存储的是编辑失败的缓存，如果想要放弃之前的修改重新编辑，应该将该缓存文件删除，否则再次打开文件仍然会进入到之前的失败编辑中"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`/` 全局搜索",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "在预览模式下使用`/`+任意字符，可以在文件中全局搜索匹配项"
+    },
+    {
+      "type": "h3",
+      "text": "通用输入"
+    },
+    {
+      "type": "p",
+      "text": "在Linux中，使用:`ctrl+A`可以将光标定位到一行的开头位置，使用:`ctrl+E`可以定位到结尾位置"
+    }
+  ]
+}

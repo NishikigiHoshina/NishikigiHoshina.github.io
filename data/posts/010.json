@@ -1,0 +1,984 @@
+{
+  "format": "blocks",
+  "no": "010",
+  "category": "人工智能",
+  "title": "RAG(Retrieval-Augmented Generation)",
+  "date": "2026-08-16",
+  "readingMinutes": 26,
+  "words": 9091,
+  "excerpt": "检索增强生成技术，为大模型提供了从特定数据源检索到的信息，以此来修正和补充生成的答案。RAG = 检索技术 + LLM 提示",
+  "body": [
+    {
+      "type": "p",
+      "text": "检索增强生成技术，为大模型提供了从特定数据源检索到的信息，以此来修正和补充生成的答案。*RAG = 检索技术 + LLM 提示*"
+    },
+    {
+      "type": "h3",
+      "text": "背景"
+    },
+    {
+      "type": "p",
+      "text": "通用大模型存在一些问题："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "LLM的知识不是实时的，模型训练后不具备自动更新知识的能力，会导致部分信息滞后",
+          "level": 0
+        },
+        {
+          "text": "LLM缺乏特定领域的知识，大模型知识来源于训练数据，这些数据主要来自公开的互联网和开源数据集，无法覆盖特定领域或高度专业化的内部知识",
+          "level": 0
+        },
+        {
+          "text": "幻觉问题，LLM有时会在回答中生成看似合理但实际上是错误的信息",
+          "level": 0
+        },
+        {
+          "text": "数据安全性",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "领域知识 缺乏|过时|幻觉|安全问题"
+    },
+    {
+      "type": "h3",
+      "text": "RAG工作原理"
+    },
+    {
+      "type": "image",
+      "alt": "RAG",
+      "src": "img/rag.png",
+      "title": "RAG"
+    },
+    {
+      "type": "p",
+      "text": "RAG工作分为两条线：\n离线准备线|在线服务线"
+    },
+    {
+      "type": "p",
+      "text": "文档/私有知识加载|用户提问\n分割|知识检索->向量数据库\n向量化|Prompt融合\n向量数据库->知识检索|大模型思考回答"
+    },
+    {
+      "type": "h3",
+      "text": "RAG标准流程"
+    },
+    {
+      "type": "quote",
+      "text": "索引(Indexing)->检索(Retriever)->生成(Generation)\nRAG可以认为是一种更高级的提示词工程"
+    },
+    {
+      "type": "h3",
+      "text": "十种RAG策略"
+    },
+    {
+      "type": "h4",
+      "text": "chunk切块策略"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Semantic Chunking 语义切块 计算向量语义，如果相近就切到同一块中",
+          "level": 0
+        },
+        {
+          "text": "Proposition Chuning LLM切块，将资料粗略切成大块后让llm来处理，最终切出一句一句的小块",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "Embedding词向量转换"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Domain-Specific Embeddings 领域特化嵌入模型",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "处理常规语义转换，通用嵌入模型可能表现不佳，这时候需要寻找专门领域的特化嵌入模型"
+    },
+    {
+      "type": "h4",
+      "text": "Indexing 数据库索引"
+    },
+    {
+      "type": "p",
+      "text": "小型项目：SQLite + sqlite-vec\n中大型项目：Postgres + pgvector"
+    },
+    {
+      "type": "h4",
+      "text": "metadata 元数据存储"
+    },
+    {
+      "type": "h4",
+      "text": "块关系丢失 - Graph RAG"
+    },
+    {
+      "type": "h4",
+      "text": "Query Processing 用户提问处理"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Query Transformation 让llm对用户提问重写，改写的更具体更泛化，或者是拆成多个子问题",
+          "level": 0
+        },
+        {
+          "text": "HyED 先让模型生成一篇假设答案文档，再用生成的文档拿去做向量检索   严重依赖llm，如果llm生成错误的答案文档，则会完全带偏检索方向",
+          "level": 0
+        },
+        {
+          "text": "Retrieval 直接拿用户提问的向量去比对数据库中的向量，找到相关的结果    适合低延迟要求场景",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "Hybrid Search 向量数据库检索"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Hybrid Search 除了用向量进行语义检索，还使用关键词匹配检索，一起合并为候选项",
+          "level": 0
+        },
+        {
+          "text": "Rerank 将上一步检索出来的chunk进行关联度打分，然后用rerank模型把query和chunk按关联度重新排序，找出最相关的结果    rerank比较费时，检索成本较高",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "Agentic RAG"
+    },
+    {
+      "type": "p",
+      "text": "将原有的pipeline形式的流程转换为循环，让agent自行审核检索的结果，看是否达到要求，达到则结束，否则继续下一轮循环检索"
+    },
+    {
+      "type": "h4",
+      "text": "Adaptive Routing"
+    },
+    {
+      "type": "p",
+      "text": "先用一个轻量的分类器判断问题复杂度，简单的问题直接走pipeline，复杂问题才走agentic rag"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "LangChain"
+    },
+    {
+      "type": "p",
+      "text": "LangChain是一个由大型语言模型 (LLM) 驱动的应用程序开发框架，是智能体工程（agent engineering）的平台。"
+    },
+    {
+      "type": "quote",
+      "text": "LangChain是一个开发LLM相关业务功能的集大成者，是一个python的第三方库，提供了各种功能的API。"
+    },
+    {
+      "type": "p",
+      "text": "提供："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "提示词优化相关功能api",
+          "level": 0
+        },
+        {
+          "text": "调用各类模型功能api",
+          "level": 0
+        },
+        {
+          "text": "会话记忆相关功能api",
+          "level": 0
+        },
+        {
+          "text": "各类文档管理分析的功能api",
+          "level": 0
+        },
+        {
+          "text": "构建agent的相关功能api",
+          "level": 0
+        },
+        {
+          "text": "各类功能链式执行的构建",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "Embedding模型词向量转换"
+    },
+    {
+      "type": "p",
+      "text": "调用本地或云端的embedding模型来完成语句的词向量转换"
+    },
+    {
+      "type": "h3",
+      "text": "【扩展】词向量匹配和余弦相似度算法"
+    },
+    {
+      "type": "p",
+      "text": "**余弦相似度=两个向量的点积 ÷ 两个向量模长的乘积**"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "提示词模板"
+    },
+    {
+      "type": "p",
+      "text": "个人认为是与传统程序中的函数思维一脉相承的，模板覆盖业务逻辑，仅需要调整输入的参数变量即可实现不同数据的使用"
+    },
+    {
+      "type": "h4",
+      "text": "ZeroShot模板"
+    },
+    {
+      "type": "p",
+      "text": "简单问题，完全信任大模型能力，不提供额外参考数据"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "prompt_template = PromptTemplate.from_template(\n    \"我的朋友姓{lastname}，刚生了个{gender}，你帮我起个名字，简单回答。\"\n)\n\n#组装链条\nchain = prompt_template | model\n\nres = chain.invoke(input={\"lastname\":\"张\",\"gender\":\"女儿\"})\nprint(res)"
+    },
+    {
+      "type": "h4",
+      "text": "FewShot模板"
+    },
+    {
+      "type": "p",
+      "text": "复杂问题输入，需要为大模型提供参考数据以生成结果"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "#示例模板\nexample_template = PromptTemplate.from_template(\"单词：{word},反义词：{antonym}\")\n\n#示例的动态数据注入  要求是list内部套字典\nexamples_data = [\n    {\"word\":\"大\",\"antonym\":\"小\"},\n    {\"word\":\"上\",\"antonym\":\"下\"},\n    {\"word\":\"尤诺\",\"antonym\":\"奥古斯塔\"}\n]\n\n\nfew_shot_template = FewShotPromptTemplate(\n    example_prompt=example_template,\n    examples=examples_data,\n    prefix=\"告诉我单词的反义词，我提供如下的示例：\",    #前缀\n    suffix=\"基于前面的示例告诉我，{input_word}的反义词是？\",    #后缀\n    input_variables=['input_word']  #列表，注入的变量列表\n)\n\nprompt_text = few_shot_template.invoke(input={\"input_word\":\"太阳\"}).to_string()\n#print(prompt_text)\n\nres = model.invoke(input=prompt_text)"
+    },
+    {
+      "type": "h4",
+      "text": "模板类的format和invoke方法"
+    },
+    {
+      "type": "p",
+      "text": "皆继承自父类BasePromptTemplate->规范format，BasePromptTemplate又继承自父类Runnable->规范invoke方法"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "format是纯字符串替换，解析占位符生成提示词，传入经典的(k=v,k=v,...)参数，支持解析{}占位符",
+          "level": 0
+        },
+        {
+          "text": "invoke是Runnable接口提供的标准方法，解析占位符生成提示词，传入的参数是字典，支持解析{}和MessagesPlaceholder结构化占位符",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "使用MessagesPlaceholder注入历史消息"
+    },
+    {
+      "type": "p",
+      "text": "langchain提供了**MessagesPlaceholder**类来动态注入提示词"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chat_prompt_template = ChatPromptTemplate.from_messages(\n    [\n        (\"system\",\"你是一个盛唐时的古代文人，刚受重用\"),\n        MessagesPlaceholder(\"history\"),\n        (\"human\",\"‘最后一轮问题’\"),\n        \n    ]\n)\n\nhistory_data = [\n    (\"human\",\"你来写一首诗\"),\n    (\"ai\",\"...\"),\n    (\"human\",\"写得好，再写一首\"),\n    (\"ai\",\"...\"),\n]\n\nprompt_text = chat_prompt_template.invoke({\"history\":history_data}).to_string()"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "Chain | 链"
+    },
+    {
+      "type": "quote",
+      "text": "将组件串联，上一个组件的输出作为下一给组件的输入"
+    },
+    {
+      "type": "p",
+      "text": "这是LangChain链的核心工作原理，也是链式调用的核心价值：实现数据的自动化流转与组件的协同工作\n`chain = prompt_template | model`\n*核心前提：Runnable子类的对象(Callable、Mapping接口的子类也可以)才能入链*"
+    },
+    {
+      "type": "p",
+      "text": "管道符功能，前一个组件的输出，作为下一个组件的输入，即 prompt_template -> model"
+    },
+    {
+      "type": "h3",
+      "text": "【扩展】python或运算符的重写"
+    },
+    {
+      "type": "p",
+      "text": "` | `运算复本质是调用内部对象方法__or__实现的\n只要自行实现__or__方法，即可对 | 符号的功能进行重写"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "class Test(object):\n    def __init__(self,name):\n        self.name = name\n\n    def __or__(self, other):\n        return MySequence(self,other)\n\n    def __str__(self):\n        return self.name\n\n\nclass MySequence(object):\n    def __init__(self,*args):\n        self.sequence = []\n        for arg in args:\n            self.sequence.append(arg)\n\n    def __or__(self, value):\n        self.sequence.append(value)\n        return self\n\n    def run(self):\n        for i in self.sequence:\n            print(i)\n\nif __name__=='__main__':\n    a=Test('a')\n    b=Test('b')\n    c=Test('c')\n\n    d = a | b| c\n\n    d.run()\n    print(type(d))"
+    },
+    {
+      "type": "h3",
+      "text": "输出解析器"
+    },
+    {
+      "type": "h4",
+      "text": "StrOutputParser类"
+    },
+    {
+      "type": "p",
+      "text": "langchain内置的简单字符串解析器\n正常调用model返回的结果是**AIMessages**类型，无法直接查看回复内容或直接作为输入提供给下一个model，所以需要一个转换器\n**StrOutputParser**可以将该内容转换为str类型输出\n链条构建示例："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chain = prompt | model | parser | model | parser"
+    },
+    {
+      "type": "p",
+      "text": "使用parser解析器做中转"
+    },
+    {
+      "type": "h4",
+      "text": "JsonOutputParser类"
+    },
+    {
+      "type": "p",
+      "text": "将model返回的结果**AIMessages**类型转换为Json格式"
+    },
+    {
+      "type": "h3",
+      "text": "多模型执行链构建"
+    },
+    {
+      "type": "p",
+      "text": "各个模型之间使用parser承接，处理模型输出数据，并使用不同的提示词模板完成不同业务逻辑"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chain = first_prompt | model | json_parser | second_prompt | model | str_parser"
+    },
+    {
+      "type": "quote",
+      "text": "形成：invoke | stream 初始输入 -> 提示词模板 -> 模型 -> 数据处理(解析器处理) -> 提示词模板 -> 模型 -> 解析器 -> 结果 的执行链条"
+    },
+    {
+      "type": "h3",
+      "text": "自定义函数插入执行链"
+    },
+    {
+      "type": "p",
+      "text": "langchain提供了RunnabeLambda类来让用户可以自己写函数并将其加入到执行链中"
+    },
+    {
+      "type": "p",
+      "text": "该类可以将普通函数等转换为Runnable接口实例\n`RunnableLambda(函数对象或lambda匿名函数)`"
+    },
+    {
+      "type": "p",
+      "text": "直接将自定义lambda函数加入链也是可以的，在执行链的运行过程中，langchain重写的管道符是可以接受Callable类的，而函数可以认为是Callable接口的实例，内部会把函数对象转换为RunnableLambda"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chain = first_prompt | model | (lambda ai_msg: {\"name\":ai_msg.content}) | second_prompt | model | str_parser"
+    },
+    {
+      "type": "h3",
+      "text": "Memory 会话记忆"
+    },
+    {
+      "type": "p",
+      "text": "除了使用message列表自行维护历史对话以外，还可以使用langchain内置的历史消息功能"
+    },
+    {
+      "type": "h4",
+      "text": "临时会话记忆"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "基于RunnableWithMessageHistory在原有链的基础上创建带有历史记录功能的新链",
+          "level": 0
+        },
+        {
+          "text": "基于InMemoryChatMessageHistory为历史记录提供内存存储",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "使用**RunnableWithMessageHistory**来创建一个带有历史对话记录的chain，该对象会自动把每次用户的输出，通过内部方法记录成列表对象存储，并且在每次调用模型时一起发送给模型，历史记录会按**session_id**区分对话归属，调用时还需要额外提供**session_id**的配置"
+    },
+    {
+      "type": "p",
+      "text": "示例代码："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "# 构建示例\nconversation_chain = RunnableWithMessageHistory(\n    base_chain,     #被增强的原有chain\n    get_history,        #通过会话id获取InMemoryChatMessageHistory类对象\n    input_messages_key=\"input\",      #表示用户输入在模板中的占位符\n    history_messages_key=\"chat_history\"     #表示用户输入在模板中的占位符\n)\n# 获取对话记忆的方法\ndef get_history(session_id):\n    if session_id not in store:\n        store[session_id] = InMemoryChatMessageHistory()\n\n    return store[session_id]\n\n# 配置固定格式\n    session_config = {\n        \"configurable\":{\n            \"session_id\":\"user_001\"\n        }\n    }\n\n# 调用示例\n    res = conversation_chain.invoke({\"input\":\"小明有两只猫\"},session_config)\n    print(res)"
+    },
+    {
+      "type": "h4",
+      "text": "长期会话记忆"
+    },
+    {
+      "type": "p",
+      "text": "实现方式是基于文件的会话记录存储，以json格式文件保存记录，以session_id为文件名区分\n构建`FileChatMessageHistory`类，继承`BaseChatMessageHistory`实现\n需要os,json库"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`add_messages:同步模式，添加消息：每次调用时向本地写`",
+          "level": 0
+        },
+        {
+          "text": "`messages:同步模式，获取消息：每次从本地读取历史消息`",
+          "level": 0
+        },
+        {
+          "text": "`clear:同步模式，清除消息`",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "三个方法"
+    },
+    {
+      "type": "p",
+      "text": "实现类之后，只要把获取对话记忆的方法从`InMemoryChatMessageHistory`改为所实现的类，并传递正确的参数即可"
+    },
+    {
+      "type": "h3",
+      "text": "Loader 文档加载器"
+    },
+    {
+      "type": "p",
+      "text": "langchain中提供了多种类型文件的加载器，皆继承自`BaseLoader`类"
+    },
+    {
+      "type": "p",
+      "text": "`Class Document`是langchain内文档的统一载体，所有文档加载器都返回此类实例\n一个基础的Document类实例，可以参考下面的代码："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "from langchain_core.documents import Document\n\ndocument = Document(\n    page_content=\"hello,world!\",metadata={\"source\":\"https://example.com\"}\n)\n\n# page_content 文档内容\n# metadata 文档元数据"
+    },
+    {
+      "type": "p",
+      "text": "内部实现了统一接口"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`load()` 一次性加载全部文档",
+          "level": 0
+        },
+        {
+          "text": "`lazy_load()` 延迟流式传输文档，适用于大型数据集，避免内存溢出",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "CSV Loader"
+    },
+    {
+      "type": "h4",
+      "text": "JSON Loader"
+    },
+    {
+      "type": "h4",
+      "text": "TXT Loader & 文档分割器"
+    },
+    {
+      "type": "h4",
+      "text": "PDF Loader"
+    },
+    {
+      "type": "h3",
+      "text": "Vector Store | 向量存储"
+    },
+    {
+      "type": "p",
+      "text": "使用langchain提供的vectorstores来存储向量，提供内存存储和本地持久化存储的方案"
+    },
+    {
+      "type": "p",
+      "text": "调用embedding模型转换文本为词向量"
+    },
+    {
+      "type": "p",
+      "text": "将向量化后的文本数据，和对应的源文本数据，存储后与输入数据进行相似度匹配，检索出语义上相关的结果返回"
+    },
+    {
+      "type": "p",
+      "text": "向量存储类均提供了三个通用api接口："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "add_document:添加文档到向量存储",
+          "level": 0
+        },
+        {
+          "text": "delete:从向量存储中删除文档",
+          "level": 0
+        },
+        {
+          "text": "similarity_search:相似度搜索",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "内存存储"
+    },
+    {
+      "type": "p",
+      "text": "使用`InMemoryVectorStore`类对象，完成内存向量存储"
+    },
+    {
+      "type": "h4",
+      "text": "持久化存储"
+    },
+    {
+      "type": "p",
+      "text": "使用`Chroma`外部数据库来完成向量存储"
+    },
+    {
+      "type": "image",
+      "alt": "检索流程",
+      "src": "C:/RAG/img",
+      "title": "检索流程"
+    },
+    {
+      "type": "h3",
+      "text": "向量检索构建提示词"
+    },
+    {
+      "type": "p",
+      "text": "执行链"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chain = prompt | print_prompt | model | StrOutputParser()\n    #构建提示词 | 输出提示词以方便调整 | 调用模型 | 输出模型返回结果"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "使用加载器加载文档",
+          "level": 0
+        },
+        {
+          "text": "使用embedding模型转换词向量并进行语义相似度检索",
+          "level": 0
+        },
+        {
+          "text": "将检索出来的结果，作为语料，使用模板动态注入语料和用户提问",
+          "level": 0
+        },
+        {
+          "text": "调用大模型进行思考回答",
+          "level": 0
+        },
+        {
+          "text": "返回结果",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "使用RunnablePassthrough构建更完整的链"
+    },
+    {
+      "type": "p",
+      "text": "`RunnablePassthrough`是langchain提供的一个用于获取链的输入的类对象，可用于输入分流节流，弥补部分链组件无法返回入链的数据造成数据丢失，从而导致链条无法完整构建"
+    },
+    {
+      "type": "p",
+      "text": "在链构建中加入`RunnablePassthrough`，那么链的输入就会被填充到对应位置"
+    },
+    {
+      "type": "p",
+      "text": "示例链构建："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "chain = (\n    {\"input\": RunnablePassthrough(),\"context\":retriever | format_func } | prompt | model | StrOutputParser()\n)"
+    },
+    {
+      "type": "p",
+      "text": "这里实际上使用了两个新组件："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "RunnablePassthrough用来保证输入数据存在",
+          "level": 0
+        },
+        {
+          "text": "词向量存储检索原本不是runnable子类，但是该类提供了一个`as_retriever`的接口，会将原本的类转换为runnable的子类并返回，这样就能够入链了",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "以及一个数据转换处理的自定义函数"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "prompt的输入是字典，于是在整个大的链条中构建一条小链，手动构建字典结构对象",
+          "level": 0
+        },
+        {
+          "text": "format_func是用来处理retriever的输出，输出的的list[Document]对象，放到字典中显然不合适，于是通过该自定义函数转换为str格式返回",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "这样做的目的是为了让整个流程全部通过链来执行，使结构清晰易懂，但是在代码可读性方面可能会略有欠缺，不过终归还是lcel范式的标准形式"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "RAG 项目示例"
+    },
+    {
+      "type": "p",
+      "text": "RAG即检索、增强和生成，可以分为两条线："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "离线处理：向私有知识库（向量存储）源源不断添加私有知识文档。",
+          "level": 0
+        },
+        {
+          "text": "向知识库添加来自未来的知识文档（基于模型训练完成时间）",
+          "level": 2
+        },
+        {
+          "text": "向模型添加私有知识文档",
+          "level": 2
+        },
+        {
+          "text": "给出模型参考资料，规避模型幻觉",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "在线处理：用户提问会先基于私有知识库做检索，获取参考资料，同步组装新提示词询问大模型获取结果。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "离线流程做知识库整理，向量存储，在线流程读知识库并调用大模型回答"
+    },
+    {
+      "type": "p",
+      "text": "项目主要模块："
+    },
+    {
+      "type": "p",
+      "text": " —— 知识库更新主程序（streamlit）\n —— 项目主程序（streamlit），启动对话web页面\n —— 配置文件\n —— 长期对话记忆存储服务\n —— 知识库更新服务\n —— rag核心服务\n —— 向量存储服务"
+    },
+    {
+      "type": "p",
+      "text": "离线部分："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "rag核心服务",
+          "level": 0
+        },
+        {
+          "text": "向量存储服务",
+          "level": 0
+        },
+        {
+          "text": "长期对话记忆存储服务",
+          "level": 0
+        },
+        {
+          "text": "知识库更新服务",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "在线部分："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "知识库更新主程序（streamlit）",
+          "level": 0
+        },
+        {
+          "text": "项目主程序（streamlit）",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "Agent 智能体开发"
+    },
+    {
+      "type": "p",
+      "text": "Agent是将大模型能力从**提供建议**，转向能够**直接干活**的应用方式，多数智能体都遵循**Agent ReAct**框架"
+    },
+    {
+      "type": "h3",
+      "text": "ReAct"
+    },
+    {
+      "type": "p",
+      "text": "**Agent ReAct**`(Reasoning+Acting)`是大模型智能体的核心思考与行动框架，是让Agent像人类一样"
+    },
+    {
+      "type": "p",
+      "text": "思考问题 -> 指定策略 -> 执行行动 -> 验证结果"
+    },
+    {
+      "type": "p",
+      "text": "的关键逻辑。"
+    },
+    {
+      "type": "p",
+      "text": "ReAct让Agent不再是“直接回答问题”，而是通过“自然语言思考过程”指导工具调用，一步步解决复杂问题，完美适配需要多步推理、工具协作的场景。"
+    },
+    {
+      "type": "p",
+      "text": "一个典型的ReAct范式Agent"
+    },
+    {
+      "type": "image",
+      "alt": "ReAct",
+      "src": "img/ReAct.png",
+      "title": "ReAct"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "思考Reasoning：分析问题，判断现有信息是否足够，明确下一步",
+          "level": 0
+        },
+        {
+          "text": "模型决策是否需要调用外部工具获取更多信息用来回答",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "行动Action：执行思考阶段指定的策略",
+          "level": 0
+        },
+        {
+          "text": "基于模型决策结果，调用工具获取信息",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "观察Observation：获取行动的结果，提取有效信息",
+          "level": 0
+        },
+        {
+          "text": "获取工具返回值，判断工具是否正常工作，为下一轮思考提供信息",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "通过 **(再)思考 -> (再)行动 -> (再)观察 -> ... -> 结束** 的循环往复指导任务完成",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "middleware 中间件"
+    },
+    {
+      "type": "p",
+      "text": "中间件的作用是对智能体的每一步工作进行控制和自定义的执行\n通过这些中间件，我们可以完成"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "日志记录、分析、调试",
+          "level": 0
+        },
+        {
+          "text": "转换提示词、工具选择",
+          "level": 0
+        },
+        {
+          "text": "重试、备用、提前终止等逻辑控制",
+          "level": 0
+        },
+        {
+          "text": "安全防护、个人身份检测 等",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "langchain框架提供了六个执行位置的中间件钩子：`before_agent,after_agent,before_model,after_model,wrap_model_call,wrap_tool_call`\n来满足agent执行不同阶段的自定义需求，给函数打上装饰器标签，在函数中完成自定义逻辑，即可实现自定义中间件的功能"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "# 示例：\n@before_agent\ndef log_before_agent(state: AgentState,runtime:Runtime) -> None:\n    # agent执行前会调用这个函数并传入state和runtime两个对象\n    print(f\"[before agent]agent启动，并附带{len(state['messages'])}条消息\")\n\n\n@after_agent\ndef log_after_agent(state:AgentState,runtime:Runtime)->None:\n    print(f\"[after agent]agent结束，并附带{len(state['messages'])}条消息\")\n\n\n@before_model\ndef log_before_model(state:AgentState,runtime:Runtime)->None:\n    print(f\"[before model]模型即将调用，并附带{len(state['messages'])}条消息\")\n\n@after_model\ndef log_after_model(state:AgentState,runtime:Runtime)->None:\n    print(f\"[after model]模型调用结束，并附带{len(state['messages'])}条消息\")\n\n@wrap_model_call\ndef model_call_hook(request,handler):\n    print(\"模型调用了\")\n    return handler(request)\n\n@wrap_tool_call\ndef tool_call_hook(request,handler):\n    print(f\"工具执行：{request.tool_call['name']}\")\n    print(f\"工具执行并传入参数：{request.tool_call['args']}\")\n\n    return handler(request)"
+    },
+    {
+      "type": "h3",
+      "text": "Agent项目"
+    },
+    {
+      "type": "h4",
+      "text": "模块化设计 - 独立工具开发"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "路径工具 : 整个项目中涉及文件查找引用等场景时，都调用该工具找出文件的绝对路径，防止在不同文件系统下的差异导致项目无法运行，或者是由于python环境差异带来的路径bug",
+          "level": 0
+        },
+        {
+          "text": "统一日志工具 : 使用python自带的logger依赖包，构建统一日志工具，分为四档日志等级，按照固定格式写日志文件，设计控制台和磁盘落盘两处日志处理，实时调试和持久化并行",
+          "level": 0
+        },
+        {
+          "text": "文件处理工具 : 使用md5算法检查文件，进行文件去重处理",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "MCP"
+    },
+    {
+      "type": "p",
+      "text": "MCP - 模型上下文协议"
+    },
+    {
+      "type": "p",
+      "text": "规定了mcp host 和 mcp server的交互"
+    },
+    {
+      "type": "p",
+      "text": "可以通过mcp tool的方式开放agent工具，让agent能够通过脚本与外界交互"
+    }
+  ]
+}

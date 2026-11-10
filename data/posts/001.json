@@ -1,0 +1,183 @@
+{
+  "format": "blocks",
+  "no": "001",
+  "category": "网络安全",
+  "title": "CSRF跨站请求伪造",
+  "date": "2026-06-06",
+  "readingMinutes": 8,
+  "words": 2666,
+  "excerpt": "同一个浏览器上，每一次访问相同域名的网站时使用的是同一个sessionid，并且使用相同的cookie来标识身份，如果用户点击了什么恶意网站或者受到xss攻击被截获了cookie，那么攻击者可以构造请求，用截获的cook…",
+  "body": [
+    {
+      "type": "p",
+      "text": "同一个浏览器上，每一次访问相同域名的网站时使用的是同一个sessionid，并且使用相同的cookie来标识身份，如果用户点击了什么恶意网站或者受到xss攻击被截获了cookie，那么攻击者可以构造请求，用截获的cookie伪装成用户给服务器发送请求，服务器靠cookie确认身份，就认定使用了该cookie的请求是用户发出的，于是便会放行攻击者的请求；"
+    },
+    {
+      "type": "h3",
+      "text": "前提"
+    },
+    {
+      "type": "p",
+      "text": "攻击者需要能够监听或控制受害者的浏览器，所以xss攻击是一般前提"
+    },
+    {
+      "type": "h3",
+      "text": "条件"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "一个相关的行动。在应用中，攻击者有理由诱导某个动作。这可能是特权操作（例如修改其他用户的权限）或对用户特定数据的任何操作（例如更改用户自己的密码）",
+          "level": 0
+        },
+        {
+          "text": "基于Cookie的会话处理。执行该操作涉及发送一个或多个 HTTP 请求，应用程序仅依赖会话 Cookie 来识别发出请求的用户。目前没有其他机制用于跟踪会话或验证用户请求",
+          "level": 0
+        },
+        {
+          "text": "没有不可预测的请求参数。执行该动作的请求中没有攻击者无法确定或猜测的参数。例如，当用户更改密码时，如果攻击者需要知道现有密码的数值，该功能就不会受到攻击",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h3",
+      "text": "分类"
+    },
+    {
+      "type": "p",
+      "text": "主要分为三类\n|get型|post型|token型|\n|请求参数在包头|请求参数在包体|发送请求时会附带一个动态生成的token值|"
+    },
+    {
+      "type": "quote",
+      "text": "动态生成的token值每次请求都不一样，所以这样很大程度上就减少了CSRF攻击的可能性"
+    },
+    {
+      "type": "h3",
+      "text": "利用方式"
+    },
+    {
+      "type": "p",
+      "text": "使用BurpSuite抓包截获cookie，并直接通过软件功能，对对应请求生成攻击html页面，然后使用xss插入到原网页或者发送钓鱼链接给受害者；\n或是截获cookie后直接构造一个正常的数据包发送给服务器"
+    },
+    {
+      "type": "h3",
+      "text": "CSRF令牌认证"
+    },
+    {
+      "type": "p",
+      "text": "一些网站会使用CSRF令牌认证来避免该攻击，但是认证机制可能存在下面几种绕过方式："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "基于请求方法的绕过：部分网站同时接受post和get两种请求方式，但是可能只对post方式做令牌校验，那么只要将攻击html页面中的方法改为get就有可能绕过",
+          "level": 0
+        },
+        {
+          "text": "基于令牌存在性的绕过：部分网站校验令牌时，令牌存在则进行校验，不存在则直接跳过校验，那么只要将请求包中的csrf令牌字段部分删除，就有可能绕过",
+          "level": 0
+        },
+        {
+          "text": "基于非绑定用户会话的绕过：部分网站不将csrf令牌与用户会话绑定，而是使用一个全球通用的令牌池，这种情况下，攻击者只需要使用正常账号自己测试一下抓包就能找到可用的令牌，令牌通常是一次性的，所以需要发起一个请求后拦截，然后用拦截到的令牌来构造攻击请求",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "SSRF服务端请求伪造"
+    },
+    {
+      "type": "p",
+      "text": "形成的原因大都是由于服务端提供了从其他服务器应用获取数据的功能,但又没有对目标地址做严格过滤与限制\n导致攻击者可以传入任意的地址来让后端服务器对其发起请求,并返回对该目标地址请求的数据\n一般用于对内网攻击"
+    },
+    {
+      "type": "quote",
+      "text": "举例：因为防火墙限制等原因，攻击者无法直接访问到目标服务器，但是攻击者发现与目标服务器处于同一内网的一台可达服务器上存在SSRF漏洞，于是攻击者可以通过与存在漏洞的可达服务器交互，控制该服务器去向目标服务器发起请求，从而实现间接攻击"
+    },
+    {
+      "type": "h3",
+      "text": "分类"
+    },
+    {
+      "type": "p",
+      "text": "根据后台使用的函数的不同,对应的影响和利用方法又有不一样"
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "PHP中下面函数的使用不当会导致SSRF:\nfile_get_contents()\nfsockopen()\ncurl_exec()"
+    },
+    {
+      "type": "h3",
+      "text": "curl"
+    },
+    {
+      "type": "p",
+      "text": "后端使用`curl_exec()`函数，可以利用curl这个命令工具\ncurl支持的协议有"
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "FTP、FTPS、HTTP、HTTPS、TFTP、SFTP、Gopher、SCP、Telnet、DICT、FILE、LDAP、LDAPS、IMAP、POP3、SMTP和RTSP。\n \ncurl还支持SSL认证、HTTP POST、HTTP PUT、FTP上传, \n \nHTTP form based upload、proxies、HTTP/2、cookies、用户名+密码认证(Basic, Plain, Digest, CRAM-MD5, NTLM, \n \nNegotiate and Kerberos)、file transfer resume、proxy tunneling"
+    },
+    {
+      "type": "p",
+      "text": "因此可以用该攻击点做探测或木马注入"
+    },
+    {
+      "type": "quote",
+      "text": "如用file协议直接让目标服务器去访问特定网址上的木马  \n或者用dict协议探测服务器本机的端口情况"
+    },
+    {
+      "type": "h3",
+      "text": "fileGetContent"
+    },
+    {
+      "type": "p",
+      "text": "后端使用`file_get_contents()`函数，作用是去访问一个资源\n支持file协议、http协议、php伪协议等"
+    },
+    {
+      "type": "quote",
+      "text": "可以利用file协议去查看服务器本机的敏感文件，如`/etc/passwd`等"
+    },
+    {
+      "type": "h2",
+      "text": "点击劫持(ClickJacking)"
+    },
+    {
+      "type": "p",
+      "text": " Clickjacking 是一种基于界面的攻击,用户通过点击诱饵网站中的其他内容,被诱骗点击隐藏网站上的可操作内容。考虑以下示例:"
+    },
+    {
+      "type": "p",
+      "text": "网页用户访问一个诱饵网站(也许这是电子邮件提供的链接),然后点击按钮以赢得奖品。不知不觉中,他们被攻击者欺骗,不得不按下另一个隐藏按钮,这导致其他网站的账户被付款。这是一个点击劫持攻击的示例。该技术依赖于将一个无形的、可操作的网页(或多个页面)整合到一个按钮或隐藏链接中,例如在 iframe 中。iframe 覆盖在用户预期的 decoy 网页内容之上。此攻击与CSRF攻击不同CSRF,因为用户需要执行诸如点击按钮等操作,而CSRF攻击则依赖于在用户无需知情或输入的情况下伪造整个请求。"
+    },
+    {
+      "type": "quote",
+      "text": "大白话就是，展现了一个视口，但是视口背后有两个网页，一个是原网页，一个是攻击者构造展示给受害者的页面，两个页面叠在一起，原网页一般会被隐藏到看不见，置于表层，构造的网页显示出来，放在底层，这样就达成了看到的是构造的网页，实际操作的却是原网页的情况，形成一种视觉上的欺骗来实现攻击"
+    },
+    {
+      "type": "h3",
+      "text": "如何构建点击劫持攻击"
+    },
+    {
+      "type": "p",
+      "text": "点击劫持攻击使用CSS来创建和操作图层。攻击者将目标网站整合为覆盖在诱饵网站上的 iframe 图层。\n下面是一个简单的攻击页面框架："
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "<head>\n\t<style>\n\t\t#target_website {\n\t\t\tposition:relative;\n\t\t\twidth:128px;\n\t\t\theight:128px;\n\t\t\topacity:0.00001;\n\t\t\tz-index:2;\n\t\t\t}\n\t\t#decoy_website {\n\t\t\tposition:absolute;\n\t\t\twidth:300px;\n\t\t\theight:400px;\n\t\t\tz-index:1;\n\t\t\t}\n\t</style>\n</head>\n...\n<body>\n\t<div id=\"decoy_website\">\n\t...decoy web content here...\n\t</div>\n\t<iframe id=\"target_website\" src=\"https://vulnerable-website.com\">\n\t</iframe>\n</body>"
+    },
+    {
+      "type": "h2",
+      "text": "跨源资源共享(CORS)"
+    }
+  ]
+}

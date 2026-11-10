@@ -1,0 +1,131 @@
+<canvas class="blog-stars" aria-hidden="true"></canvas>
+<div class="blog-grain" aria-hidden="true"></div>
+<div class="blog-progress"></div>
+
+<button class="blog-top" type="button" aria-label="回到顶部" title="回到顶部">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M12 2.6c2.7 1.9 4 4.6 4 7.5 0 2.2-.8 4.3-2.2 6.1H10.2C8.8 14.4 8 12.3 8 10.1c0-2.9 1.3-5.6 4-7.5Z"/>
+    <circle cx="12" cy="9.4" r="1.6"/>
+    <path d="M10.2 14.5 7.4 17.2v2.1l2.8-1.3"/>
+    <path d="M13.8 14.5l2.8 2.7v2.1l-2.8-1.3"/>
+    <path d="M10.6 18.2c.4 1.3 1 2.2 1.4 2.8.4-.6 1-1.5 1.4-2.8"/>
+  </svg>
+</button>
+
+<nav class="blog-nav" aria-label="博客导航">
+  <ul class="nav-links">
+    <li><a href="#" data-go="essays">随笔</a></li>
+    <li><a href="#" data-go="about">关于</a></li>
+    <li><a href="#" data-go="archives">归档</a></li>
+    <li><a href="#" data-go="contact">联络</a></li>
+  </ul>
+</nav>
+
+<div class="blog-scroll">
+
+  <main>
+
+    <div class="view active" id="view-home">
+      <header class="hero">
+        <p class="hero-kicker">PERSONAL OBSERVATORY — EST. 2026</p>
+        <h1 class="hero-title">
+          <span class="line"><span>在</span></span>
+          <span class="line"><span><em>繁星</em>深处，</span></span>
+          <span class="line"><span>记录。</span></span>
+        </h1>
+        <div class="hero-meta">
+          <span><b id="statPosts">0</b> 篇记录</span>
+          <span><b id="statWords">0</b> 字</span>
+          <span><b>∞</b> 光年之外</span>
+        </div>
+        <div class="vertical-note">将此刻的记忆 · 带向星空</div>
+        <div class="scroll-cue"><i></i>SCROLL — 下潜</div>
+      </header>
+
+      <section id="essays">
+        <div class="sec-head reveal">
+          <span class="no">01 /</span>
+          <h2>近期内容</h2>
+          <div class="rule"></div>
+          <span class="tag">LATEST LOGS</span>
+        </div>
+
+        <div id="postList"></div>
+      </section>
+
+      <section id="about">
+        <div class="sec-head reveal">
+          <span class="no">02 /</span>
+          <h2>关于观测者</h2>
+          <div class="rule"></div>
+          <span class="tag">ABOUT</span>
+        </div>
+        <div class="about-grid">
+          <div class="reveal">
+            <p class="about-lede">白天看世界，夜里<em>观星空</em>。</p>
+            <div class="about-body">
+              <p>这里是「深空观测站」，互联网不起眼角落里的一小块自留地</p>
+              <p>更新频率取决于心情与月相。如果刚好遇见你，欢迎留下来看一会儿星星。</p>
+            </div>
+            <div class="about-facts">
+              <div class="fact"><span>坐标</span><span>地球</span></div>
+              <div class="fact"><span>在站时间</span><span id="daysOnStation">—</span></div>
+            </div>
+          </div>
+          <div class="ring-wrap reveal">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <defs>
+                <path id="blogCirc" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/>
+              </defs>
+              <text><textPath href="#blogCirc"> DEEP SKY · MjAxMzQ3ODE3OUBxcS5jb20= · PERSONAL BLOG </textPath></text>
+              <circle cx="100" cy="100" r="1.6" fill="var(--ink)"/>
+              <circle cx="100" cy="100" r="26" fill="none" stroke="rgba(242,242,239,.18)" stroke-width=".6"/>
+              <circle cx="126" cy="100" r="2.4" fill="none" stroke="rgba(242,242,239,.4)" stroke-width=".6"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="view" id="view-post">
+      <article class="post-hero">
+        <a class="back-link" href="#" data-go="home">← 返回观测站</a>
+        <p class="post-kicker" id="postKicker"></p>
+        <h1 class="post-title" id="postTitle"></h1>
+        <p class="post-excerpt" id="postExcerpt"></p>
+        <div class="post-stats" id="postStats"></div>
+      </article>
+      <div class="reading" id="postBody"></div>
+      <nav class="post-nav" id="postNav"></nav>
+    </div>
+
+    <div class="view" id="view-archive">
+      <div class="archive-page">
+        <div class="sec-head">
+          <span class="no">03 /</span>
+          <h2>归档星图</h2>
+          <div class="rule"></div>
+          <span class="tag">ARCHIVE</span>
+        </div>
+        <p class="archive-lede">
+          这里是全部已收录的观测记录，按年份由近及远排列。<br>
+          共 <b id="archiveCount">0</b> 条记录，跨越 <b id="archiveYears">0</b> 个年份。
+        </p>
+        <div class="filters" id="filters"></div>
+        <div id="archiveList"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer id="contact">
+    <span>© 2026 深空观测站 — VOID OBSERVATORY</span>
+    <div class="foot-links">
+
+      <a href="https://github.com/NishikigiHoshina/" target="_blank" rel="noopener noreferrer">GitHub</a>
+
+      <a href="mailto:k7147@foxmail.com">Mail</a>
+      <a href="#" data-go="home">返回星空 ↑</a>
+    </div>
+  </footer>
+
+</div>

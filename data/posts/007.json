@@ -1,0 +1,607 @@
+{
+  "format": "blocks",
+  "no": "007",
+  "category": "运维部署",
+  "title": "Passbolt 密钥管理应用 Docker Compose 部署指南",
+  "date": "2026-07-01",
+  "readingMinutes": 14,
+  "words": 5007,
+  "excerpt": "本文详细介绍了在 Ubuntu Server 环境下，使用 Docker Compose 部署 Passbolt 密钥管理应用的完整流程，涵盖环境准备、docker-compose.yml 编写、服务启动、管理员与普通用…",
+  "body": [
+    {
+      "type": "h2",
+      "text": "Passbolt 密钥管理应用 Docker Compose 部署指南"
+    },
+    {
+      "type": "p",
+      "text": "本文档基于 Ubuntu Server 26.04 虚拟机环境，介绍如何使用 Docker Compose 部署 Passbolt 社区版（CE），并完成初始配置。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "目录"
+    },
+    {
+      "type": "h3",
+      "text": "一、环境准备"
+    },
+    {
+      "type": "h4",
+      "text": "1.1 安装 Docker 与 Docker Compose"
+    },
+    {
+      "type": "p",
+      "text": "确保宿主机已安装 Docker Engine 和 Docker Compose 插件："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 检查 Docker 版本\ndocker --version\ndocker compose version"
+    },
+    {
+      "type": "p",
+      "text": "如未安装，请参考 [Docker 官方文档](https://docs.docker.com/engine/install/ubuntu/) 完成安装。"
+    },
+    {
+      "type": "h4",
+      "text": "1.2 确认网络连通性"
+    },
+    {
+      "type": "p",
+      "text": "部署完成后需从物理机（如 Windows 11）浏览器访问虚拟机上的 Passbolt 服务，请提前确认："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "虚拟机与物理机处于同一网络，或网络可达",
+          "level": 0
+        },
+        {
+          "text": "虚拟机防火墙放行 80/443 端口：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo ufw allow 80/tcp\nsudo ufw allow 443/tcp"
+    },
+    {
+      "type": "h4",
+      "text": "1.3 创建项目目录"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "mkdir -p ~/passbolt && cd ~/passbolt"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "二、编写 Compose 文件"
+    },
+    {
+      "type": "p",
+      "text": "在项目目录下创建 `docker-compose.yml` ："
+    },
+    {
+      "type": "quote",
+      "text": "也可以将官方提供的yaml文件重命名后直接使用"
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "text": "services:\n  db:\n    image: mariadb:10.11\n    restart: unless-stopped\n    environment:\n      MYSQL_RANDOM_ROOT_PASSWORD: \"true\"\n      MYSQL_DATABASE: \"passbolt\"\n      MYSQL_USER: \"passbolt\"\n      MYSQL_PASSWORD: \"P4ssb0lt\"\n    volumes:\n      - database_volume:/var/lib/mysql\n\n  passbolt:\n    image: passbolt/passbolt:latest-ce\n    restart: unless-stopped\n    depends_on:\n      - db\n    environment:\n      APP_FULL_BASE_URL: https://passbolt.local\n      DATASOURCES_DEFAULT_HOST: \"db\"\n      DATASOURCES_DEFAULT_USERNAME: \"passbolt\"\n      DATASOURCES_DEFAULT_PASSWORD: \"P4ssb0lt\"\n      DATASOURCES_DEFAULT_DATABASE: \"passbolt\"\n    volumes:\n      - gpg_volume:/etc/passbolt/gpg\n      - jwt_volume:/etc/passbolt/jwt\n    command:\n      [\n        \"/usr/bin/wait-for.sh\",\n        \"-t\",\n        \"0\",\n        \"db:3306\",\n        \"--\",\n        \"/docker-entrypoint.sh\",\n      ]\n    ports:\n      - 80:80\n      - 443:443\n\nvolumes:\n  database_volume:\n  gpg_volume:\n  jwt_volume:"
+    },
+    {
+      "type": "quote",
+      "text": "**安全提示** ：生产环境务必将数据库密码 `P4ssb0lt` 替换为强密码，并修改 `APP_FULL_BASE_URL` 为实际域名。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "三、启动服务"
+    },
+    {
+      "type": "h4",
+      "text": "3.1 拉取 镜像 并启动"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "cd ~/passbolt\ndocker compose up -d"
+    },
+    {
+      "type": "p",
+      "text": "首次启动会自动拉取 MariaDB 和 Passbolt 镜像，耗时约 2-5 分钟（视网络状况而定）。"
+    },
+    {
+      "type": "h4",
+      "text": "3.2 检查启动状态"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 查看容器运行状态\ndocker compose ps\n\n# 查看实时日志，等待服务就绪\ndocker compose logs -f"
+    },
+    {
+      "type": "p",
+      "text": "当日志中出现类似 `Server ready` 或 `Listening on` 的信息时，表示服务已启动完成。"
+    },
+    {
+      "type": "h4",
+      "text": "3.3 常见启动问题"
+    },
+    {
+      "type": "p",
+      "text": "如遇镜像拉取失败（如 `failed to resolve reference` ），通常是 Docker 镜像源配置问题。可尝试更换可用镜像源："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo nano /etc/docker/daemon.json"
+    },
+    {
+      "type": "p",
+      "text": "示例配置："
+    },
+    {
+      "type": "code",
+      "lang": "json",
+      "text": "{\n  \"registry-mirrors\": [\n    \"https://docker.1panel.live\",\n    \"https://hub.rat.dev\",\n    \"https://docker.m.daocloud.io\"\n  ]\n}"
+    },
+    {
+      "type": "p",
+      "text": "保存后重启 Docker："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "sudo systemctl daemon-reload\nsudo systemctl restart docker\ndocker compose up -d"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "四、创建管理员账户"
+    },
+    {
+      "type": "p",
+      "text": "Passbolt 安装完成后 **没有默认管理员** ，必须手动创建第一个管理员账户。"
+    },
+    {
+      "type": "h4",
+      "text": "4.1 执行创建命令"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "docker compose exec passbolt su -m -c \"bin/cake passbolt register_user \\\n    -u admin@yourdomain.com \\\n    -f Admin \\\n    -l User \\\n    -r admin\" -s /bin/sh www-data"
+    },
+    {
+      "type": "table",
+      "head": [
+        "参数",
+        "说明"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "`-u`",
+          "管理员邮箱（登录账号）"
+        ],
+        [
+          "`-f`",
+          "名字"
+        ],
+        [
+          "`-l`",
+          "姓氏"
+        ],
+        [
+          "`-r admin`",
+          "角色为管理员"
+        ]
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "4.2 保存激活链接"
+    },
+    {
+      "type": "p",
+      "text": "命令执行成功后会输出一个激活链接，格式如下："
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "https://passbolt.local/setup/start/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy\n1"
+    },
+    {
+      "type": "p",
+      "text": "**请复制并保存该链接** ，稍后用于激活管理员账户。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "五、访问与激活"
+    },
+    {
+      "type": "h4",
+      "text": "5.1 配置 Hosts（推荐）"
+    },
+    {
+      "type": "p",
+      "text": "由于 `docker-compose.yml` 中配置的 `APP_FULL_BASE_URL` 为 `https://passbolt.local` ，需在物理机（Windows 11）上配置 hosts 映射："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "以管理员身份打开记事本",
+          "level": 0
+        },
+        {
+          "text": "打开文件： `C:\\Windows\\System32\\drivers\\etc\\hosts`",
+          "level": 0
+        },
+        {
+          "text": "添加一行（将 `192.168.x.x` 替换为虚拟机实际 IP）：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "192.168.x.x  passbolt.local\n1"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "保存文件",
+          "level": 0
+        },
+        {
+          "text": "在 CMD 中刷新 DNS 缓存：",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "ipconfig /flushdns"
+    },
+    {
+      "type": "h4",
+      "text": "5.2 激活管理员账户"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "在 Windows 浏览器中打开之前保存的激活链接",
+          "level": 0
+        },
+        {
+          "text": "由于是自签名证书，浏览器会提示不安全，点击 **“高级” → “继续前往”**",
+          "level": 0
+        },
+        {
+          "text": "按照页面提示设置主密码（Master Password）—— **务必牢记，丢失后无法恢复**",
+          "level": 0
+        },
+        {
+          "text": "下载并安装浏览器扩展（Passbolt Extension）",
+          "level": 0
+        },
+        {
+          "text": "完成设置后，即可使用邮箱和主密码登录管理后台",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "5.3 直接通过 IP 访问的注意事项"
+    },
+    {
+      "type": "p",
+      "text": "如果不配置 hosts、直接通过 `https://<虚拟机IP>` 访问，需修改 `docker-compose.yml` 中的 `APP_FULL_BASE_URL` 为实际 IP，否则会出现 CSP（内容安全策略）错误导致页面无法正常显示。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "六、创建普通用户"
+    },
+    {
+      "type": "p",
+      "text": "管理员账户激活后，可通过相同方式创建普通用户，仅需将角色参数改为 `user` ："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "docker compose exec passbolt su -m -c \"bin/cake passbolt register_user \\\n    -u zhangsan@company.com \\\n    -f 张 \\\n    -l 三 \\\n    -r user\" -s /bin/sh www-data"
+    },
+    {
+      "type": "h4",
+      "text": "6.1 批量创建用户"
+    },
+    {
+      "type": "p",
+      "text": "如需批量创建多个用户，可编写脚本："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "#!/bin/bash\n\nusers=(\n  \"zhangsan@company.com:张:三\"\n  \"lisi@company.com:李:四\"\n  \"wangwu@company.com:王:五\"\n)\n\nfor user in \"${users[@]}\"; do\n  IFS=':' read -r email first last <<< \"$user\"\n  echo \"Creating user: $email\"\n  docker compose exec passbolt su -m -c \"bin/cake passbolt register_user \\\n    -u $email -f $first -l $last -r user\" -s /bin/sh www-data\n  echo \"----------------------------------------\"\ndone"
+    },
+    {
+      "type": "h4",
+      "text": "6.2 用户激活流程"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "复制输出的激活链接，发送给对应用户",
+          "level": 0
+        },
+        {
+          "text": "用户在自己的浏览器中打开链接",
+          "level": 0
+        },
+        {
+          "text": "设置主密码并安装浏览器扩展",
+          "level": 0
+        },
+        {
+          "text": "完成激活后即可登录使用",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "6.3 用户组管理"
+    },
+    {
+      "type": "p",
+      "text": "对于多用户场景，建议通过 Web 管理界面创建用户组，方便密码共享："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "管理员登录 Passbolt Web 界面",
+          "level": 0
+        },
+        {
+          "text": "进入 **Users → Groups**",
+          "level": 0
+        },
+        {
+          "text": "创建组（如 `开发团队` 、 `运维团队` ）",
+          "level": 0
+        },
+        {
+          "text": "将用户添加到组",
+          "level": 0
+        },
+        {
+          "text": "密码可以按组共享，无需逐个用户分享",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "七、常见问题"
+    },
+    {
+      "type": "h4",
+      "text": "Q1：创建用户后没有收到激活邮件？"
+    },
+    {
+      "type": "p",
+      "text": "Passbolt 默认不配置 SMTP，激活链接仅在命令行输出。如需自动发送邮件，请参考附录配置邮件服务。"
+    },
+    {
+      "type": "h4",
+      "text": "Q2：如何备份数据？"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 备份数据库\ndocker compose exec db mysqldump -u passbolt -pP4ssb0lt passbolt > passbolt_backup.sql\n\n# 备份 GPG 和 JWT 密钥卷\ndocker run --rm -v passbolt_gpg_volume:/data -v $(pwd):/backup alpine tar czf /backup/gpg_backup.tar.gz -C /data .\ndocker run --rm -v passbolt_jwt_volume:/data -v $(pwd):/backup alpine tar czf /backup/jwt_backup.tar.gz -C /data ."
+    },
+    {
+      "type": "h4",
+      "text": "Q3：如何更新 Passbolt？"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "cd ~/passbolt\ndocker compose pull\ndocker compose up -d"
+    },
+    {
+      "type": "h4",
+      "text": "Q4：忘记主密码怎么办？"
+    },
+    {
+      "type": "p",
+      "text": "**主密码无法重置或找回** 。建议："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "将主密码保存在安全的密码管理器中",
+          "level": 0
+        },
+        {
+          "text": "管理员可在后台删除旧账户并重新创建",
+          "level": 0
+        },
+        {
+          "text": "设置主密码时会提供恢复工具，一般会自动下载到激活设备上，可以查阅官方文档，借助恢复工具找回密码",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "Q5：如何完全卸载？"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "cd ~/passbolt\n\n# 停止并删除容器、网络（保留数据卷）\ndocker compose down\n\n# 彻底删除，包括所有数据（⚠️ 不可逆）\ndocker compose down -v"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "附录：邮件服务配置（可选）"
+    },
+    {
+      "type": "p",
+      "text": "如需在用户创建时自动发送激活邮件，可在 `docker-compose.yml` 的 `passbolt` 服务中添加 SMTP 环境变量。"
+    },
+    {
+      "type": "h4",
+      "text": "常用邮箱 SMTP 配置示例"
+    },
+    {
+      "type": "table",
+      "head": [
+        "邮箱服务商",
+        "SMTP 服务器",
+        "端口",
+        "加密",
+        "密码说明"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "QQ 邮箱",
+          "smtp.qq.com",
+          "465",
+          "ssl",
+          "需开启 SMTP，使用 **授权码**"
+        ],
+        [
+          "163 邮箱",
+          "smtp.163.com",
+          "465",
+          "ssl",
+          "需开启 SMTP，使用 **授权码**"
+        ],
+        [
+          "Gmail",
+          "smtp.gmail.com",
+          "587",
+          "tls",
+          "应用专用密码"
+        ],
+        [
+          "Outlook",
+          "smtp.office365.com",
+          "587",
+          "tls",
+          "正常密码"
+        ]
+      ]
+    },
+    {
+      "type": "h4",
+      "text": "配置示例（QQ 邮箱）"
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "text": "passbolt:\n  environment:\n    # ... 原有配置 ...\n    EMAIL_TRANSPORT_DEFAULT_HOST: \"smtp.qq.com\"\n    EMAIL_TRANSPORT_DEFAULT_PORT: \"465\"\n    EMAIL_TRANSPORT_DEFAULT_TLS: \"true\"\n    EMAIL_DEFAULT_FROM: \"123456789@qq.com\"\n    EMAIL_TRANSPORT_DEFAULT_USERNAME: \"123456789@qq.com\"\n    EMAIL_TRANSPORT_DEFAULT_PASSWORD: \"你的16位授权码\""
+    },
+    {
+      "type": "h4",
+      "text": "验证邮件功能"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "docker compose exec passbolt su -m -c \"bin/cake passbolt send_test_email \\\n    --recipient=你的邮箱@example.com\" -s /bin/sh www-data"
+    },
+    {
+      "type": "p",
+      "text": "配置完成后，创建用户时会自动发送激活邮件至用户邮箱。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h3",
+      "text": "参考链接"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "[Passbolt 官方文档](https://help.passbolt.com/)",
+          "level": 0
+        },
+        {
+          "text": "[Passbolt Docker 镜像说明](https://hub.docker.com/r/passbolt/passbolt)",
+          "level": 0
+        },
+        {
+          "text": "[Docker Compose 官方文档](https://docs.docker.com/compose/)",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "quote",
+      "text": "文档版本：2026-07-01  \n适用环境：Ubuntu Server + Docker Compose + Passbolt CE"
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/162497833?spm=1001.2014.3001.5501"
+}

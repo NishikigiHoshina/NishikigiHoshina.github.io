@@ -1,0 +1,236 @@
+{
+  "format": "blocks",
+  "no": "018",
+  "category": "运维部署",
+  "title": "uv 管理 Python 环境命令指南",
+  "date": "2026-10-02",
+  "readingMinutes": 7,
+  "words": 2294,
+  "excerpt": "文章浏览阅读178次。uv是基于Rust开发的高性能Python包与环境管理工具，可替代pip、pyenv、virtualenv、poetry等。本文涵盖uv安装、Python版本管理、虚拟环境创建、项目初始化与依赖管理…",
+  "body": [
+    {
+      "type": "p",
+      "text": "uv 是 Astral 出品的超快 Python 包/项目管理工具（Rust 编写），可替代 pip、pip-tools、virtualenv、pyenv、poetry 等。下面按使用场景整理常用命令。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "一、安装 uv"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# macOS / Linux\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n# Windows (PowerShell)\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n\n# 或通过 pip 安装\npip install uv\n\n# 验证安装\nuv --version"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "二、管理 Python 版本（替代 pyenv）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv python install 3.12          # 安装指定 Python 版本\nuv python list                  # 查看已安装/可下载的版本\nuv python find 3.12             # 查找某版本的路径\nuv python uninstall 3.11        # 卸载"
+    },
+    {
+      "type": "p",
+      "text": "uv 会按需自动下载 Python，无需手动安装。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "三、创建虚拟环境（替代 virtualenv）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv venv                         # 创建 .venv（用默认 Python）\nuv venv --python 3.12           # 指定 Python 版本\nuv venv myenv                   # 自定义目录名"
+    },
+    {
+      "type": "p",
+      "text": "激活（uv 本身不需要激活，激活只是为了兼容老习惯）："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "source .venv/bin/activate       # macOS/Linux\n.venv\\Scripts\\activate          # Windows"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "四、项目管理（推荐工作流，替代 poetry/pdm）"
+    },
+    {
+      "type": "h3",
+      "text": "初始化项目"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv init myproject               # 新建项目目录\ncd myproject\nuv init                         # 在已有目录中初始化\nuv init --lib                   # 库项目（会生成 src 布局）"
+    },
+    {
+      "type": "p",
+      "text": "生成文件： `pyproject.toml` 、 `README.md` 、 `main.py` ，以及锁定版本的 `uv.lock` 。"
+    },
+    {
+      "type": "h3",
+      "text": "添加 / 移除依赖"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv add requests                 # 添加运行时依赖\nuv add 'pytest&gt;=8'              # 带版本约束\nuv add --dev ruff               # 开发依赖（写入 dev group）\nuv add --group docs mkdocs      # 自定义依赖组\n\nuv remove requests              # 移除依赖\nuv add requests --upgrade       # 升级某个包\nuv lock --upgrade               # 升级全部锁定"
+    },
+    {
+      "type": "h3",
+      "text": "安装与同步环境"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv sync                         # 按 uv.lock 完整同步 .venv\nuv sync --frozen                # CI 中严格按锁文件，不重新解析\nuv sync --no-dev                # 只装运行时依赖（生产环境）"
+    },
+    {
+      "type": "h3",
+      "text": "运行命令"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv run python main.py           # 自动使用项目环境运行\nuv run pytest                   # 运行依赖的工具，无需手动安装\nuv run --no-sync python x.py    # 跳过同步直接运行\nuv run --with rich python x.py  # 临时附加依赖运行"
+    },
+    {
+      "type": "h3",
+      "text": "其他项目命令"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv lock                         # 生成/更新 uv.lock\nuv tree                         # 查看依赖树\nuv build                        # 构建 sdist/wheel\nuv publish                      # 发布到 PyPI\nuv export --format requirements-txt &gt; requirements.txt  # 导出旧格式"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "五、pip 兼容模式（低侵入式使用）"
+    },
+    {
+      "type": "p",
+      "text": "如果已有 `requirements.txt` 的项目，可直接用："
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uv pip install -r requirements.txt\nuv pip install requests\nuv pip list\nuv pip freeze\nuv pip uninstall requests\nuv pip compile requirements.in -o requirements.txt   # 替代 pip-tools"
+    },
+    {
+      "type": "p",
+      "text": "\\> 注意： `uv pip` 需要在虚拟环境中运行（或加 `--system` ）。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "六、工具运行（替代 pipx）"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "uvx ruff check                  # 临时运行 ruff（等价 uv tool run）\nuv tool install ruff            # 永久安装某工具到独立环境\nuv tool list                    # 查看已安装工具\nuv tool upgrade ruff            # 升级工具\nuv tool uninstall ruff"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "七、常用全局选项"
+    },
+    {
+      "type": "table",
+      "head": [
+        "选项",
+        "说明"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "`-p 3.12` / `--python 3.12`",
+          "指定 Python 版本"
+        ],
+        [
+          "`--directory &lt;path&gt;`",
+          "在指定项目目录执行"
+        ],
+        [
+          "`--system`",
+          "操作系统级 Python（谨慎使用）"
+        ],
+        [
+          "`UV_INDEX_URL`",
+          "换源，如国内镜像 `https://mirrors.aliyun.com/pypi/simple/`"
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "text": "换源示例（写入 `~/.config/uv/uv.toml` ）："
+    },
+    {
+      "type": "code",
+      "lang": "toml",
+      "text": "[[index]]\nurl = \"https://mirrors.aliyun.com/pypi/simple/\"\ndefault = true"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "八、日常速查流程"
+    },
+    {
+      "type": "code",
+      "lang": "bash",
+      "text": "# 开始一个新项目\nuv init myapp && cd myapp\nuv add fastapi uvicorn\n\n# 开发\nuv run uvicorn main:app --reload\n\n# 加开发依赖\nuv add --dev pytest\nuv run pytest\n\n# 团队协作\ngit add pyproject.toml uv.lock\n# 队友拉代码后：\nuv sync\n\n# CI 中\nuv sync --frozen && uv run pytest"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "p",
+      "text": "**核心记忆点：**"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "`uv add` 装依赖、 `uv sync` 同步环境、 `uv run` 跑命令 —— 这三条覆盖 90% 的项目日常；",
+          "level": 0
+        },
+        {
+          "text": "`uv pip` 系列兼容旧习惯， `uvx` / `uv tool` 管理命令行工具；",
+          "level": 0
+        },
+        {
+          "text": "所有操作都极快（比 pip 快 10–100 倍），且 uv 会自动管理 Python 版本和虚拟环境。",
+          "level": 0
+        }
+      ]
+    }
+  ],
+  "source": "https://blog.csdn.net/2301_80463151/article/details/166995748?spm=1001.2014.3001.5501"
+}

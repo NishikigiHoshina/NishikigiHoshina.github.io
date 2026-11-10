@@ -1,0 +1,297 @@
+{
+  "format": "blocks",
+  "no": "003",
+  "category": "计算机基础",
+  "title": "不同操作系统 TTL 默认值汇总",
+  "date": "2026-06-10",
+  "readingMinutes": 5,
+  "words": 1911,
+  "excerpt": "当你在抓包中看到某个 TTL 值时，可以对照下表推测远程主机的操作系统：",
+  "body": [
+    {
+      "type": "quote",
+      "text": "TTL（Time To Live，生存时间）是 IP 数据报头部的一个 8 位字段，表示数据包在网络中最多可经过的路由器跳数，最大值为 255。不同操作系统设置的默认 TTL 值有所不同，因此可以通过抓包分析 TTL 值来辅助识别远程主机的操作系统类型（OS Fingerprinting）。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "一、常见操作系统 TTL 默认值速查表"
+    },
+    {
+      "type": "table",
+      "head": [
+        "操作系统",
+        "默认 TTL 值"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "**Windows 95 / 98**",
+          "32"
+        ],
+        [
+          "**Windows NT 3.51**",
+          "32"
+        ],
+        [
+          "**Windows NT 4.0 / 2000 / Server 2003**",
+          "128"
+        ],
+        [
+          "**Windows XP**",
+          "128"
+        ],
+        [
+          "**Windows Vista / 7 / Server 2008**",
+          "128"
+        ],
+        [
+          "**Windows 8 / 10 / 11**",
+          "128"
+        ],
+        [
+          "**Linux（2.0.x 内核）**",
+          "64"
+        ],
+        [
+          "**Linux（2.2.x / 2.4 内核）**",
+          "255"
+        ],
+        [
+          "**Linux（现代发行版：3.x / 4.x / 5.x / 6.x）**",
+          "64"
+        ],
+        [
+          "**macOS / Mac OS X**",
+          "64"
+        ],
+        [
+          "**经典 Mac OS（MacTCP 2.0.x）**",
+          "60"
+        ],
+        [
+          "**FreeBSD 2.1**",
+          "64"
+        ],
+        [
+          "**FreeBSD 3.4 / 4.0**",
+          "255"
+        ],
+        [
+          "**FreeBSD 5+**",
+          "64"
+        ],
+        [
+          "**Solaris 2.x**",
+          "255"
+        ],
+        [
+          "**AIX（TCP）**",
+          "60"
+        ],
+        [
+          "**AIX（UDP）**",
+          "30"
+        ],
+        [
+          "**HP-UX 9.0x**",
+          "30"
+        ],
+        [
+          "**HP-UX 10.01**",
+          "64"
+        ],
+        [
+          "**IRIX**",
+          "60"
+        ],
+        [
+          "**SunOS 4.1.x**",
+          "60"
+        ],
+        [
+          "**Cisco IOS（路由器 / 交换机）**",
+          "255"
+        ],
+        [
+          "**Android**",
+          "64"
+        ],
+        [
+          "**iOS**",
+          "64"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "二、按 TTL 值反查操作系统"
+    },
+    {
+      "type": "p",
+      "text": "当你在抓包中看到某个 TTL 值时，可以对照下表推测远程主机的操作系统："
+    },
+    {
+      "type": "table",
+      "head": [
+        "TTL 值",
+        "可能的操作系统"
+      ],
+      "align": [
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "**32**",
+          "Windows 95 / 98、Windows NT 3.51（较老的 Windows 系统）"
+        ],
+        [
+          "**60**",
+          "经典 Mac OS、AIX（TCP）、IRIX、SunOS 4.1.x"
+        ],
+        [
+          "**64**",
+          "现代 Linux（Ubuntu/Debian/CentOS 等）、macOS、Android、iOS、FreeBSD（部分版本）、HP-UX 10.01"
+        ],
+        [
+          "**128**",
+          "Windows NT 4.0+ / 2000 / XP / Vista / 7 / 8 / 10 / 11、Windows Server 全系列"
+        ],
+        [
+          "**255**",
+          "Solaris 2.x、FreeBSD 3.4/4.0、Cisco IOS、部分 Linux 2.2/2.4 内核、传统 UNIX 系统"
+        ]
+      ]
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "h2",
+      "text": "三、补充说明"
+    },
+    {
+      "type": "h3",
+      "text": "3.1 TTL 衰减规则"
+    },
+    {
+      "type": "p",
+      "text": "数据包每经过一个路由器（一跳），TTL 值减 **1**。也就是说，实际抓包看到的 TTL 值（`TTL_observed`）计算公式为："
+    },
+    {
+      "type": "code",
+      "lang": "",
+      "text": "TTL_observed = 初始默认 TTL — 经过的路由器跳数"
+    },
+    {
+      "type": "p",
+      "text": "例如："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "一台 Windows 10 主机（默认 TTL=128），中间经过 10 个路由器后到达目标，抓包看到的 TTL 为 **118**。",
+          "level": 0
+        },
+        {
+          "text": "一台 Linux 主机（默认 TTL=64），经过 5 跳后，看到的 TTL 为 **59**。",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "**技巧**：将抓包看到的 TTL 值向上取到最近的 2 的幂次（32、64、128、255），即可推测初始 TTL。"
+    },
+    {
+      "type": "h3",
+      "text": "3.2 TCP 与 UDP 的差异"
+    },
+    {
+      "type": "p",
+      "text": "部分操作系统对 **TCP** 和 **UDP** 流量设置了不同的默认 TTL 值："
+    },
+    {
+      "type": "table",
+      "head": [
+        "操作系统",
+        "TCP TTL",
+        "UDP TTL"
+      ],
+      "align": [
+        "left",
+        "left",
+        "left"
+      ],
+      "rows": [
+        [
+          "AIX",
+          "60",
+          "30"
+        ],
+        [
+          "HP-UX 9.x",
+          "30",
+          "30"
+        ],
+        [
+          "OpenVMS（旧版）",
+          "128",
+          "64"
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "text": "在使用 TTL 进行操作系统识别时，需要注意区分协议类型。"
+    },
+    {
+      "type": "h3",
+      "text": "3.3 可修改性"
+    },
+    {
+      "type": "p",
+      "text": "所有主流操作系统都允许用户/管理员手动修改默认 TTL 值："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "**Linux**：修改 `/proc/sys/net/ipv4/ip_default_ttl` 或通过 `sysctl net.ipv4.ip_default_ttl=<value>` 调整",
+          "level": 0
+        },
+        {
+          "text": "**Windows**：修改注册表 `HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\DefaultTTL`",
+          "level": 0
+        },
+        {
+          "text": "**macOS**：通过 `sysctl net.inet.ip.ttl=<value>` 调整",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "text": "因此 **TTL 值不能作为 100% 可靠的操作系统指纹识别依据**，仅作为参考特征之一，通常需配合其他探测手段（如 Nmap 的 TCP/IP 协议栈指纹）综合判断。"
+    },
+    {
+      "type": "hr"
+    },
+    {
+      "type": "p",
+      "text": "*整理时间：2026-06-10*\n*参考来源：[CSDN - allway2](https://blog.csdn.net/allway2/article/details/109136579)、[阿里云开发者社区](https://developer.aliyun.com/article/512125)、[卡饭学院](https://www.kafan.cn/edu/6499842.html)*"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+
+
+.subpage {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+  background: #000;
+  color-scheme: dark;
+  --bg: #000;
+  --white: #f4f4f4;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--white);
+  user-select: none;
+  isolation: isolate;
+}
+.subpage * { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  .subpage, .subpage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
